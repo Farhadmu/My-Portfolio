@@ -13,7 +13,7 @@ export function LiveActivity() {
         desc="Currently building, and the latest from the blog."
       />
 
-      <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.85fr_1.15fr]">
         <Reveal>
           <div className="panel h-full p-6">
             <p className="mono mb-5 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">

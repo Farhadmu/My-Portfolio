@@ -98,6 +98,8 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5.5rem;
+    overflow-x: hidden;
+    max-width: 100%;
   }
 
   body {
@@ -106,6 +108,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    max-width: 100%;
   }
 
   ::selection {

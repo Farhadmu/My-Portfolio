@@ -40,7 +40,7 @@ export function GithubDash() {
         </p>
       </Reveal>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_1.15fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_1.15fr]">
         <div className="grid gap-4">
           <Reveal className="grid grid-cols-2 gap-4">
             {githubStats.map((s) => (
@@ -139,12 +139,12 @@ function Heatmap() {
   });
 
   return (
-    <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-hidden">
+     <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-1">
       {cells.map((lvl, i) => (
         <span
           key={i}
           title={`${lvl} contributions`}
-          className="size-2.5 rounded-[3px]"
+          className="size-2 shrink-0 rounded-[3px] sm:size-2.5"
           style={{
             background:
               lvl === 0

@@ -101,7 +101,7 @@ export function Projects() {
         <Reveal className="mb-10">
           <TiltCard max={5} scale={1.005}>
             <article className="panel overflow-hidden">
-              <div className="grid lg:grid-cols-[1.15fr_1fr]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr]">
                 <div className="relative overflow-hidden">
                   <img
                     src={featured.image}

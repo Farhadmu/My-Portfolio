@@ -13,7 +13,7 @@ export function About() {
         desc="A CSE undergraduate who ships — curious about systems, obsessed with clean interfaces."
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
         <Reveal className="panel overflow-hidden p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row">
             <div className="relative h-40 w-32 shrink-0 overflow-hidden rounded-2xl border border-border sm:h-44">

@@ -18,7 +18,7 @@ export function Credibility() {
       />
 
       {/* Case study spotlight */}
-      <Reveal className="panel mb-10 grid gap-8 overflow-hidden p-6 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
+      <Reveal className="panel mb-10 grid grid-cols-1 gap-8 overflow-hidden p-6 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
         <div className="relative overflow-hidden rounded-2xl">
           <img
             src={spotlight.image}
@@ -72,13 +72,13 @@ export function Credibility() {
         </div>
       </Reveal>
 
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         {/* Testimonials */}
         <Reveal>
           <h3 className="mono mb-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             Testimonials
           </h3>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {testimonials.map((t) => (
               <div key={t.name} className="panel flex h-full flex-col p-5">
                 <Quote className="mb-3 size-5 text-primary/50" />

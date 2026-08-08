@@ -91,7 +91,7 @@ export function Contact() {
         desc="Open to internships, freelance work and collaboration. I usually reply within a day."
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.15fr]">
+     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.15fr]">
         <Reveal className="space-y-4">
           {[
             {
