@@ -119,7 +119,7 @@ export function Hero() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mx-auto w-full max-w-md"
+          className="relative mx-auto w-full max-w-[260px] pb-10 sm:max-w-sm sm:pb-0 lg:max-w-md"
         >
           <div className="relative aspect-square">
             <div className="absolute inset-0">
