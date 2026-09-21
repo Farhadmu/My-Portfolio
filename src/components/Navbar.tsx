@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Menu, X } from "lucide-react";
+import { Eye, Menu, X } from "lucide-react";
 import { navSections, profile } from "@/data/portfolio";
 import { Magnetic } from "./Magnetic";
 
@@ -71,7 +71,7 @@ export function Navbar() {
 
         <ul className="hidden items-center gap-1 lg:flex">
           {navSections.map((s) => (
-            <li key={s.id}>
+            <li key={`${s.id}-${s.label}`}>
               <button
                 onClick={() => go(s.id)}
                 className={`relative rounded-lg px-3 py-2 text-sm transition-colors ${
@@ -90,9 +90,27 @@ export function Navbar() {
               </button>
             </li>
           ))}
+          <li>
+            <a
+              href="/blog"
+              className="relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:text-primary/90 transition-colors"
+            >
+              Blog
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+            </a>
+          </li>
         </ul>
 
         <div className="flex items-center gap-2">
+          <a
+            href="/blog"
+            className="lg:hidden rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary"
+          >
+            Blog
+          </a>
           <Magnetic className="hidden sm:inline-block">
             <a
               href={profile.resume}
@@ -100,7 +118,7 @@ export function Navbar() {
               rel="noreferrer"
               className="mono inline-flex items-center gap-2 rounded-xl border border-primary/40 px-3.5 py-2 text-xs text-primary transition-colors hover:bg-primary/10"
             >
-              <Download className="size-3.5" /> resume
+              <Eye className="size-3.5" /> view resume
             </a>
           </Magnetic>
           <button
@@ -126,12 +144,24 @@ export function Navbar() {
             </button>
           ))}
           <a
+            href="/blog"
+            className="mono rounded-lg px-3 py-2.5 text-left text-sm font-medium text-primary hover:bg-secondary"
+          >
+            ~/blog [ live tech feed ]
+          </a>
+          <a
+            href="/admin"
+            className="mono rounded-lg px-3 py-2.5 text-left text-xs text-muted-foreground hover:bg-secondary"
+          >
+            ~/admin [ cms portal ]
+          </a>
+          <a
             href={profile.resume}
             target="_blank"
             rel="noreferrer"
             className="mono rounded-lg px-3 py-2.5 text-sm text-primary"
           >
-            [ download resume ]
+            [ view resume ]
           </a>
         </div>
       )}

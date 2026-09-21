@@ -73,7 +73,27 @@ export function CommandPalette() {
 
           <CommandSeparator />
 
-          <CommandGroup heading="Links">
+          <CommandGroup heading="Links & Pages">
+            <CommandItem
+              onSelect={() => {
+                setOpen(false);
+                window.location.href = "/blog";
+              }}
+            >
+              <Rss />
+              <span>Tech Blog & Feed</span>
+              <CommandShortcut>/blog</CommandShortcut>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                setOpen(false);
+                window.location.href = "/admin";
+              }}
+            >
+              <FileText />
+              <span>Admin CMS Portal</span>
+              <CommandShortcut>/admin</CommandShortcut>
+            </CommandItem>
             <CommandItem onSelect={() => openExternal(profile.github)}>
               <GithubIcon className="size-4" />
               <span>GitHub Profile</span>
@@ -82,10 +102,6 @@ export function CommandPalette() {
             <CommandItem onSelect={() => openExternal(profile.linkedin)}>
               <LinkedinIcon className="size-4" />
               <span>LinkedIn</span>
-            </CommandItem>
-            <CommandItem onSelect={() => openExternal(profile.blog)}>
-              <Rss />
-              <span>Blog</span>
             </CommandItem>
             <CommandItem onSelect={() => openExternal(profile.resume)}>
               <FileText />

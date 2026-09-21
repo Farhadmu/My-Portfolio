@@ -1,4 +1,4 @@
-import { ArrowRight, Download, Mail, MapPin } from "lucide-react";
+import { ArrowRight, Eye, Mail, MapPin, Terminal, ArrowUpRight } from "lucide-react";
 import { motion } from "motion/react";
 import { profile, stats } from "@/data/portfolio";
 import { Hero3D } from "./three/Hero3D";
@@ -16,47 +16,53 @@ export function Hero() {
       <div aria-hidden className="grid-bg absolute inset-0" />
       <div
         aria-hidden
-        className="absolute -left-40 top-10 size-[34rem] rounded-full opacity-25 blur-[120px]"
+        className="absolute -left-40 top-10 size-[36rem] rounded-full opacity-25 blur-[130px] pointer-events-none"
         style={{ background: "var(--cyan)" }}
       />
       <div
         aria-hidden
-        className="absolute -right-32 bottom-0 size-[30rem] rounded-full opacity-20 blur-[130px]"
+        className="absolute -right-32 bottom-0 size-[32rem] rounded-full opacity-20 blur-[140px] pointer-events-none"
         style={{ background: "var(--violet)" }}
       />
 
-      <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="mono mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-1.5 text-[11px] text-muted-foreground">
+          {/* Engineering Availability Telemetry Pill */}
+          <div className="mono mb-5 inline-flex items-center gap-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-[11px] font-semibold text-emerald-400 backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.18)]">
             <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-lime opacity-70" />
-              <span className="relative inline-flex size-2 rounded-full bg-lime" />
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
             </span>
-            open_to_opportunities
-          </p>
+            <span className="tracking-wide">ACTIVE SWE PIPELINE · AVAILABLE FOR HIRE</span>
+          </div>
 
-          <h1 className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.25rem]">
-            <span className="block text-muted-foreground text-lg font-normal sm:text-xl">
-              Hello, I am
+          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.25rem]">
+            <span className="block text-muted-foreground/80 text-xs sm:text-sm uppercase tracking-[0.25em] font-mono mb-2">
+              Software Engineer &amp; Full-Stack Builder
             </span>
-            <span className="text-gradient">{profile.name}</span>
+            <span className="bg-gradient-to-r from-cyan-400 via-sky-200 to-indigo-400 bg-clip-text text-transparent drop-shadow-sm">
+              {profile.name}
+            </span>
           </h1>
 
-          <p className="mono mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-primary">
-            <span className="size-1.5 rounded-full bg-primary" />
-            {profile.role}
-            <span className="text-muted-foreground">//</span>
-            <span className="text-accent">React &amp; Next.js</span>
-          </p>
+          <div className="mono mt-4 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 font-semibold text-primary">
+              <Terminal className="size-3.5" /> CSE @ BAIUST
+            </span>
+            <span className="text-muted-foreground/60">//</span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-secondary/50 px-2.5 py-1 font-medium text-foreground">
+              Systems Architecture · React · Next.js · Node.js
+            </span>
+          </div>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/85">
+          <p className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-foreground/90 font-medium">
             {profile.tagline}
           </p>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
             {profile.intro}
           </p>
 
@@ -64,7 +70,7 @@ export function Hero() {
             <Magnetic>
               <button
                 onClick={() => go("projects")}
-                className="group inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--glow-cyan)] transition-transform"
+                className="group inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--glow-cyan)] transition-all hover:scale-[1.02]"
                 style={{ background: "var(--gradient-brand)" }}
               >
                 View Projects
@@ -77,15 +83,17 @@ export function Hero() {
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => track("resume_click", { source: "hero" })}
-                className="inline-flex items-center gap-2 rounded-xl border border-primary/40 px-5 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                className="group inline-flex items-center gap-2 rounded-xl border border-primary/50 bg-primary/10 px-5 py-3 text-sm font-semibold text-primary backdrop-blur-md transition-all duration-300 hover:bg-primary/20 hover:border-primary hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:-translate-y-0.5"
               >
-                <Download className="size-4" /> Download Resume
+                <Eye className="size-4 text-primary transition-transform group-hover:scale-110" />
+                <span>View Resume</span>
+                <ArrowUpRight className="size-3.5 opacity-70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
             </Magnetic>
             <Magnetic>
               <button
                 onClick={() => go("contact")}
-                className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-accent/50 hover:text-foreground"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-5 py-3 text-sm font-medium text-muted-foreground transition-all hover:border-accent/50 hover:text-foreground hover:bg-card"
               >
                 <Mail className="size-4" /> Contact Me
               </button>
@@ -104,13 +112,13 @@ export function Hero() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={label}
-                className="glass grid size-10 place-items-center rounded-xl text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-primary"
+                className="glass grid size-10 place-items-center rounded-xl text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-primary hover:border-primary/40"
               >
                 <I className="size-4" />
               </a>
             ))}
             <span className="mono ml-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-              <MapPin className="size-3.5" /> {profile.location}
+              <MapPin className="size-3.5 text-primary/70" /> {profile.location}
             </span>
           </div>
         </motion.div>
@@ -119,14 +127,14 @@ export function Hero() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mx-auto w-full max-w-[260px] pb-10 sm:max-w-sm sm:pb-0 lg:max-w-md"
+          className="relative mx-auto w-full max-w-[280px] pb-10 sm:max-w-sm sm:pb-0 lg:max-w-md"
         >
           <div className="relative aspect-square">
             <div className="absolute inset-0">
               <Hero3D />
             </div>
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
-              <div className="relative size-40 overflow-hidden rounded-full border border-primary/30 shadow-[var(--glow-violet)] sm:size-52">
+              <div className="relative size-44 overflow-hidden rounded-full border-2 border-primary/40 shadow-[0_0_40px_rgba(139,92,246,0.35)] ring-4 ring-primary/20 sm:size-56">
                 <img
                   src={profile.photo}
                   alt={`Portrait of ${profile.name}`}
@@ -140,17 +148,21 @@ export function Hero() {
         </motion.div>
       </div>
 
-      <div className="relative mx-auto mt-14 grid w-full max-w-6xl grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* Pro Metrics Bento Grid */}
+      <div className="relative mx-auto mt-16 grid w-full max-w-6xl grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
         {stats.map((s, i) => (
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 + i * 0.08, duration: 0.6 }}
-            className="glass rounded-2xl px-4 py-4 text-center"
+            className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 sm:p-5 text-center backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:bg-card/90 hover:shadow-[0_15px_30px_-10px_rgba(6,182,212,0.2)] hover:-translate-y-1"
           >
-            <div className="text-xl font-bold text-gradient sm:text-2xl">{s.value}</div>
-            <div className="mono mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <div className="absolute top-0 inset-x-4 h-[2px] bg-gradient-to-r from-transparent via-primary/0 to-transparent transition-all duration-300 group-hover:via-primary" />
+            <div className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
+              {s.value}
+            </div>
+            <div className="mono mt-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
               {s.label}
             </div>
           </motion.div>

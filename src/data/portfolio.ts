@@ -189,6 +189,7 @@ export type Project = {
   title: string;
   tagline: string;
   description: string;
+  category?: "Full Stack" | "Frontend" | "Backend" | "Software" | string;
   image: string;
   tech: string[];
   stack: string[];
@@ -205,6 +206,7 @@ export const projects: Project[] = [
     slug: "fixitnow",
     title: "FixItNow",
     tagline: "Home Service Marketplace",
+    category: "Full Stack",
     description:
       "A full-stack home service marketplace connecting customers with vetted technicians — browse services, book a time slot, pay via Stripe and track every job start to finish across customer, technician and admin dashboards.",
     image: fixitnow,
@@ -231,6 +233,7 @@ export const projects: Project[] = [
     slug: "arthub",
     title: "ArtHub",
     tagline: "Online Art Marketplace",
+    category: "Full Stack",
     description:
       "A full-stack digital platform connecting art lovers and collectors with talented artists. Browse, discover and purchase original artworks with Stripe payments, role-based dashboards, analytics and purchase-gated engagement.",
     image: arthub,
@@ -257,6 +260,7 @@ export const projects: Project[] = [
     slug: "drivefleet",
     title: "DriveFleet",
     tagline: "Premium Car Rental Platform",
+    category: "Full Stack",
     description:
       "A full-stack car rental platform with Firebase + JWT auth, smart booking, full CRUD car listings and MongoDB-powered search & filter — wrapped in a sleek dark UI.",
     image: drivefleet,
@@ -278,6 +282,7 @@ export const projects: Project[] = [
     slug: "keenkeeper",
     title: "KeenKeeper",
     tagline: "Relationship Management App",
+    category: "Frontend",
     description:
       "Stay connected with the people who matter most — track interactions, set contact goals and get auto-calculated On-Track / Almost Due / Overdue status in one clean dashboard.",
     image: keenkeeper,
@@ -292,6 +297,7 @@ export const projects: Project[] = [
     slug: "suncart",
     title: "SunCart",
     tagline: "Summer Essentials Store",
+    category: "Frontend",
     description:
       "A summer e-commerce SPA — 16 curated products across 9 categories with Firebase auth, Google sign-in, an animated Swiper hero, search, filter, sort and protected routes.",
     image: suncart,
@@ -311,6 +317,7 @@ export const projects: Project[] = [
     slug: "digitools",
     title: "DigiTools",
     tagline: "Digital Tools Marketplace",
+    category: "Frontend",
     description:
       "A modern, responsive marketplace for premium digital tools. Browse curated products, manage the cart and enjoy a smooth experience built for creators and developers.",
     image: digitools,
@@ -325,6 +332,7 @@ export const projects: Project[] = [
     slug: "issues-tracker",
     title: "GitHub Issues Tracker",
     tagline: "REST API + Vanilla JS",
+    category: "Software",
     description:
       "A responsive GitHub issues tracker that fetches real repository issues — filter open/closed, view priority labels and browse in a clean card interface.",
     image: issues,
@@ -339,6 +347,7 @@ export const projects: Project[] = [
     slug: "job-tracker",
     title: "Job Application Tracker",
     tagline: "DOM & Event Delegation",
+    category: "Software",
     description:
       "A practical DOM manipulation project for tracking job applications — filter by status, manage interviews and rejections with clean event handling and delegation.",
     image: jobtracker,
