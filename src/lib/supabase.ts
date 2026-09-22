@@ -313,21 +313,112 @@ export const triggerDataUpdate = () => {
 // In-memory cache fallback in case of storage quota restrictions
 let memoryProfileCache: UserProfileConfig | null = null;
 
+// Helper to downscale large base64 data URLs to prevent browser localStorage quota exceeded errors
+export const ensureCompactImage = async (
+  src: string,
+  maxWidth = 400,
+  maxHeight = 400,
+  quality = 0.85
+): Promise<string> => {
+  if (!src || !src.startsWith("data:image/")) return src;
+  if (typeof window === "undefined" || typeof document === "undefined") return src;
+
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(src);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } catch {
+          resolve(src);
+        }
+      };
+      img.onerror = () => resolve(src);
+      img.src = src;
+    } catch {
+      resolve(src);
+    }
+  });
+};
+
 // Profile & Cover Customization Management
 export const getProfileConfig = (): UserProfileConfig => {
   if (typeof window === "undefined") return DEFAULT_PROFILE_CONFIG;
-  if (memoryProfileCache) return memoryProfileCache;
-  const raw = localStorage.getItem(STORAGE_KEYS.PROFILE_CONFIG);
-  if (raw) {
-    try {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.PROFILE_CONFIG);
+    if (raw) {
       const parsed = JSON.parse(raw);
-      memoryProfileCache = { ...DEFAULT_PROFILE_CONFIG, ...parsed };
-      return memoryProfileCache;
-    } catch (e) {
-      console.error("Failed to parse profile config:", e);
+      const merged = { ...DEFAULT_PROFILE_CONFIG, ...parsed };
+      memoryProfileCache = merged;
+      return merged;
     }
+  } catch (e) {
+    console.error("Failed to parse profile config from localStorage:", e);
   }
-  return DEFAULT_PROFILE_CONFIG;
+  return memoryProfileCache || DEFAULT_PROFILE_CONFIG;
+};
+
+export const saveProfileConfigAsync = async (config: Partial<UserProfileConfig>): Promise<UserProfileConfig> => {
+  if (typeof window !== "undefined") {
+    let finalAvatar = config.avatar;
+    let finalCover = config.coverImage;
+
+    // Automatically optimize base64 images to avoid browser quota overflow (~25KB avatar, ~80KB cover)
+    if (finalAvatar && finalAvatar.startsWith("data:image/")) {
+      finalAvatar = await ensureCompactImage(finalAvatar, 360, 360, 0.85);
+    }
+    if (finalCover && finalCover.startsWith("data:image/")) {
+      finalCover = await ensureCompactImage(finalCover, 1440, 700, 0.82);
+    }
+
+    const current = getProfileConfig();
+    const merged: UserProfileConfig = {
+      ...current,
+      ...config,
+      ...(finalAvatar !== undefined ? { avatar: finalAvatar } : {}),
+      ...(finalCover !== undefined ? { coverImage: finalCover } : {}),
+    };
+
+    memoryProfileCache = merged;
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROFILE_CONFIG, JSON.stringify(merged));
+    } catch (err) {
+      console.warn("Retrying storage write with ultra-compression:", err);
+      try {
+        if (merged.avatar?.startsWith("data:image/")) {
+          merged.avatar = await ensureCompactImage(merged.avatar, 200, 200, 0.7);
+        }
+        if (merged.coverImage?.startsWith("data:image/")) {
+          merged.coverImage = await ensureCompactImage(merged.coverImage, 900, 450, 0.7);
+        }
+        localStorage.setItem(STORAGE_KEYS.PROFILE_CONFIG, JSON.stringify(merged));
+      } catch (innerErr) {
+        console.error("Failed to write to localStorage even after compression:", innerErr);
+      }
+    }
+
+    triggerDataUpdate();
+    return merged;
+  }
+  return { ...DEFAULT_PROFILE_CONFIG, ...config };
 };
 
 export const saveProfileConfig = (config: Partial<UserProfileConfig>): UserProfileConfig => {

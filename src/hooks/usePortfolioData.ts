@@ -8,10 +8,13 @@ import {
   getServices,
   getTestimonials,
   getCertificates,
+  getProfileConfig,
   type BlogPost,
   type DynamicProject,
   type DynamicTestimonial,
   type DynamicCertificate,
+  type UserProfileConfig,
+  DEFAULT_PROFILE_CONFIG,
 } from "@/lib/supabase";
 import {
   projects as defaultProjects,
@@ -205,4 +208,27 @@ export function useDynamicCertificates() {
   }, [reload]);
 
   return { certificates, loading, reload };
+}
+
+export function useProfileConfig(): UserProfileConfig {
+  const [config, setConfig] = useState<UserProfileConfig>(DEFAULT_PROFILE_CONFIG);
+
+  const reload = useCallback(() => {
+    setConfig(getProfileConfig());
+  }, []);
+
+  useEffect(() => {
+    // Immediate client reload to hydrate from localStorage
+    reload();
+
+    const handleUpdate = () => reload();
+    window.addEventListener("portfolio_data_changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("portfolio_data_changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [reload]);
+
+  return config;
 }

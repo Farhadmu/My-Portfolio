@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { ArrowRight, Eye, Mail, MapPin, Terminal, ArrowUpRight, MessageSquare } from "lucide-react";
 import { motion } from "motion/react";
 import { profile, stats } from "@/data/portfolio";
@@ -7,20 +6,14 @@ import { Magnetic } from "./Magnetic";
 import { GithubIcon, LinkedinIcon } from "./BrandIcons";
 import { track } from "./analytics";
 import { sound } from "@/lib/sound";
-import { getProfileConfig } from "@/lib/supabase";
+import { useProfileConfig } from "@/hooks/usePortfolioData";
 
 function go(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
 export function Hero() {
-  const [profileConfig, setProfileConfig] = useState(getProfileConfig);
-
-  useEffect(() => {
-    const handleUpdate = () => setProfileConfig(getProfileConfig());
-    window.addEventListener("portfolio_data_changed", handleUpdate);
-    return () => window.removeEventListener("portfolio_data_changed", handleUpdate);
-  }, []);
+  const profileConfig = useProfileConfig();
   return (
     <section id="home" className="relative min-h-[100svh] overflow-hidden px-5 pb-16 pt-32">
       <div aria-hidden className="grid-bg absolute inset-0" />

@@ -3,8 +3,10 @@ import { Eye, Menu, X, Volume2, VolumeX, FileText, Sparkles, Lock } from "lucide
 import { navSections, profile } from "@/data/portfolio";
 import { Magnetic } from "./Magnetic";
 import { isSoundEnabled, setSoundEnabled, sound } from "@/lib/sound";
+import { useProfileConfig } from "@/hooks/usePortfolioData";
 
 export function Navbar() {
+  const profileConfig = useProfileConfig();
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("home");
   const [open, setOpen] = useState(false);
@@ -78,19 +80,27 @@ export function Navbar() {
       >
         <button
           onClick={() => go("home")}
-          className="flex items-center gap-2.5 text-left"
+          className="flex items-center gap-2.5 text-left group"
           aria-label="Go to top"
         >
-          <span
-            className="grid size-9 place-items-center rounded-xl text-sm font-bold text-primary-foreground"
-            style={{ background: "var(--gradient-brand)" }}
-          >
-            {profile.initials}
-          </span>
+          {profileConfig.avatar ? (
+            <img
+              src={profileConfig.avatar}
+              alt={profileConfig.name || profile.name}
+              className="size-9 rounded-xl object-cover ring-2 ring-primary/40 shadow-sm transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <span
+              className="grid size-9 place-items-center rounded-xl text-sm font-bold text-primary-foreground shadow-sm"
+              style={{ background: "var(--gradient-brand)" }}
+            >
+              {profile.initials}
+            </span>
+          )}
           <span className="hidden text-sm font-semibold tracking-tight sm:block">
-            {profile.shortName}
+            {profileConfig.name ? profileConfig.name.split(" ")[0] : profile.shortName}
             <span className="mono block text-[10px] font-normal text-muted-foreground">
-              cse · developer
+              {profileConfig.subRole ? profileConfig.subRole.split("·")[0].trim() : "cse · developer"}
             </span>
           </span>
         </button>

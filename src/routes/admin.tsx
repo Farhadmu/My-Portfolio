@@ -76,6 +76,7 @@ import {
   deleteGuestbookEntry,
   getProfileConfig,
   saveProfileConfig,
+  saveProfileConfigAsync,
   resetProfileConfig,
   DEFAULT_PROFILE_CONFIG,
   type UserProfileConfig,
@@ -3142,8 +3143,9 @@ function ProfileManager() {
   const [avatarUploadName, setAvatarUploadName] = useState("");
   const [coverUploadName, setCoverUploadName] = useState("");
   const [isProcessingImg, setIsProcessingImg] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Sync state if another tab or component updates profile config
+  // Sync state if another tab or component updates profile config, and sync on mount
   useEffect(() => {
     const sync = () => {
       const fresh = getProfileConfig();
@@ -3157,8 +3159,13 @@ function ProfileManager() {
       setArchitectureTag(fresh.architectureTag || "");
       setActiveTag(fresh.activeTag || "");
     };
+    sync();
     window.addEventListener("portfolio_data_changed", sync);
-    return () => window.removeEventListener("portfolio_data_changed", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("portfolio_data_changed", sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   const handleAvatarFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3195,10 +3202,11 @@ function ProfileManager() {
     }
   };
 
-  const handleSave = (e?: React.FormEvent) => {
+  const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    setIsSaving(true);
     try {
-      const saved = saveProfileConfig({
+      const saved = await saveProfileConfigAsync({
         avatar,
         coverImage,
         name,
@@ -3217,10 +3225,12 @@ function ProfileManager() {
       setEducationTag(saved.educationTag);
       setArchitectureTag(saved.architectureTag);
       setActiveTag(saved.activeTag);
-      toast.success("Profile & Cover settings saved successfully! All pages are now updated.");
+      toast.success("Profile & Cover settings saved successfully! All pages & Navbar are updated.");
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to save: " + (err?.message || "Storage error"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -3266,9 +3276,11 @@ function ProfileManager() {
           <button
             type="button"
             onClick={handleSave}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
+            disabled={isSaving || isProcessingImg}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
           >
-            <Save className="size-3.5" /> Save Changes
+            {isSaving ? <RefreshCw className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
@@ -3418,12 +3430,17 @@ function ProfileManager() {
                       : "border-border/60 hover:border-primary/50"
                   }`}
                 >
-                  <div className="h-16 w-full overflow-hidden rounded-lg">
+                  <div className="relative h-16 w-full overflow-hidden rounded-lg">
                     <img
                       src={preset.url}
                       alt={preset.name}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
+                    {coverImage === preset.url && (
+                      <span className="absolute top-1 right-1 flex items-center gap-0.5 rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground shadow-sm">
+                        <Check className="size-2.5" /> Active
+                      </span>
+                    )}
                   </div>
                   <div className="p-1.5">
                     <div className="text-[11px] font-semibold text-foreground line-clamp-1">
@@ -3590,9 +3607,11 @@ function ProfileManager() {
           <div className="flex items-center gap-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+              disabled={isSaving || isProcessingImg}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             >
-              <Save className="size-4" /> Save Profile &amp; Cover Changes
+              {isSaving ? <RefreshCw className="size-4 animate-spin" /> : <Save className="size-4" />}
+              {isSaving ? "Saving & Syncing All Pages..." : "Save Profile & Cover Changes"}
             </button>
           </div>
         </div>

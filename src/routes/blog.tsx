@@ -31,15 +31,13 @@ import {
   Camera,
 } from "lucide-react";
 import { profile } from "@/data/portfolio";
-import { useDynamicBlogs } from "@/hooks/usePortfolioData";
+import { useDynamicBlogs, useProfileConfig } from "@/hooks/usePortfolioData";
 import {
   reactToBlogPost,
   addCommentToBlogPost,
   sendDirectMessage,
-  getProfileConfig,
   type BlogPost,
   type BlogComment,
-  type UserProfileConfig,
 } from "@/lib/supabase";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -175,19 +173,13 @@ function BlogPage() {
   // Reaction popover or fast reaction tracking
   const [userReactions, setUserReactions] = useState<Record<string, string>>({});
 
-  // Dynamic Profile & Cover configuration
-  const [profileConfig, setProfileConfig] = useState<UserProfileConfig>(getProfileConfig);
+  // Dynamic Profile & Cover configuration (hydrates on mount & auto-syncs)
+  const profileConfig = useProfileConfig();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsAdmin(sessionStorage.getItem("farhad_admin_authed") === "true");
     }
-
-    const handleDataChanged = () => {
-      setProfileConfig(getProfileConfig());
-    };
-    window.addEventListener("portfolio_data_changed", handleDataChanged);
-    return () => window.removeEventListener("portfolio_data_changed", handleDataChanged);
   }, []);
 
   // Sync selected blog when data updates

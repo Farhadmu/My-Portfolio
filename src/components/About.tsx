@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { profile } from "@/data/portfolio";
-import { getProfileConfig } from "@/lib/supabase";
+import { useProfileConfig } from "@/hooks/usePortfolioData";
 import { Section, SectionHeading } from "./Section";
 import { Reveal } from "./Reveal";
 import { TiltCard } from "./TiltCard";
@@ -99,13 +99,7 @@ const engineeringTenets = [
 
 export function About() {
   const [activeTab, setActiveTab] = useState<"tenets" | "telemetry" | "metrics">("tenets");
-  const [profileConfig, setProfileConfig] = useState(getProfileConfig);
-
-  useEffect(() => {
-    const handleUpdate = () => setProfileConfig(getProfileConfig());
-    window.addEventListener("portfolio_data_changed", handleUpdate);
-    return () => window.removeEventListener("portfolio_data_changed", handleUpdate);
-  }, []);
+  const profileConfig = useProfileConfig();
 
   return (
     <Section id="about">
