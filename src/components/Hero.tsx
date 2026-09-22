@@ -1,10 +1,11 @@
-import { ArrowRight, Eye, Mail, MapPin, Terminal, ArrowUpRight } from "lucide-react";
+import { ArrowRight, Eye, Mail, MapPin, Terminal, ArrowUpRight, MessageSquare } from "lucide-react";
 import { motion } from "motion/react";
 import { profile, stats } from "@/data/portfolio";
 import { Hero3D } from "./three/Hero3D";
 import { Magnetic } from "./Magnetic";
 import { GithubIcon, LinkedinIcon } from "./BrandIcons";
 import { track } from "./analytics";
+import { sound } from "@/lib/sound";
 
 function go(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -92,10 +93,19 @@ export function Hero() {
             </Magnetic>
             <Magnetic>
               <button
-                onClick={() => go("contact")}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-5 py-3 text-sm font-medium text-muted-foreground transition-all hover:border-accent/50 hover:text-foreground hover:bg-card"
+                type="button"
+                onClick={() => {
+                  sound.pop();
+                  window.dispatchEvent(new CustomEvent("open_message_modal"));
+                }}
+                className="group relative inline-flex items-center gap-2.5 rounded-xl border border-primary/50 bg-gradient-to-r from-primary/15 via-card to-accent/15 px-5 py-3 text-sm font-bold text-foreground backdrop-blur-md shadow-[0_0_20px_rgba(6,182,212,0.22)] transition-all duration-300 hover:border-primary hover:bg-primary/25 hover:shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:-translate-y-0.5 active:scale-95"
               >
-                <Mail className="size-4" /> Contact Me
+                <span className="relative flex size-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
+                </span>
+                <MessageSquare className="size-4 text-primary transition-transform group-hover:scale-110" />
+                <span>Message Farhad</span>
               </button>
             </Magnetic>
           </div>

@@ -52,8 +52,10 @@ export interface DirectMessage {
   name: string;
   email: string;
   message: string;
+  topic?: string;
   createdAt: string;
   read: boolean;
+  replied?: boolean;
 }
 
 export type DynamicProject = Project & { id?: string };
@@ -123,6 +125,28 @@ export interface CaseStudySpotlightConfig {
   image?: string;
   live?: string;
 }
+
+export interface UserProfileConfig {
+  name: string;
+  subRole: string;
+  bio: string;
+  avatar: string;
+  coverImage: string;
+  educationTag: string;
+  architectureTag: string;
+  activeTag: string;
+}
+
+export const DEFAULT_PROFILE_CONFIG: UserProfileConfig = {
+  name: profile.name,
+  subRole: "CSE @ BAIUST · Software Engineer & Systems Builder · Tech Writer",
+  bio: "Writing deep-dives into Next.js 15, React Server Components, distributed architectures, C++ algorithmic complexity, and real-world production engineering.",
+  avatar: profile.photo,
+  coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop",
+  educationTag: "🎓 Computer Science @ BAIUST",
+  architectureTag: "⚡ Systems & Full-Stack Architecture",
+  activeTag: "● Active Publications",
+};
 
 // Check for Supabase env credentials
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
@@ -276,6 +300,7 @@ const STORAGE_KEYS = {
   SPOTLIGHT_CONFIG: "farhad_portfolio_spotlight_config",
   TESTIMONIALS: "farhad_portfolio_testimonials",
   CERTIFICATES: "farhad_portfolio_certificates",
+  PROFILE_CONFIG: "farhad_portfolio_profile_config",
 };
 
 // Dispatch helper to trigger reactivity across all subscribed components
@@ -283,6 +308,39 @@ export const triggerDataUpdate = () => {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("portfolio_data_changed"));
   }
+};
+
+// Profile & Cover Customization Management
+export const getProfileConfig = (): UserProfileConfig => {
+  if (typeof window === "undefined") return DEFAULT_PROFILE_CONFIG;
+  const raw = localStorage.getItem(STORAGE_KEYS.PROFILE_CONFIG);
+  if (raw) {
+    try {
+      return { ...DEFAULT_PROFILE_CONFIG, ...JSON.parse(raw) };
+    } catch (e) {
+      console.error("Failed to parse profile config:", e);
+    }
+  }
+  return DEFAULT_PROFILE_CONFIG;
+};
+
+export const saveProfileConfig = (config: Partial<UserProfileConfig>): UserProfileConfig => {
+  if (typeof window !== "undefined") {
+    const current = getProfileConfig();
+    const merged: UserProfileConfig = { ...current, ...config };
+    localStorage.setItem(STORAGE_KEYS.PROFILE_CONFIG, JSON.stringify(merged));
+    triggerDataUpdate();
+    return merged;
+  }
+  return { ...DEFAULT_PROFILE_CONFIG, ...config };
+};
+
+export const resetProfileConfig = (): UserProfileConfig => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(STORAGE_KEYS.PROFILE_CONFIG);
+    triggerDataUpdate();
+  }
+  return DEFAULT_PROFILE_CONFIG;
 };
 
 // Case Study Spotlight Project Management
@@ -598,6 +656,7 @@ export const sendDirectMessage = async (msg: {
   name: string;
   email: string;
   message: string;
+  topic?: string;
 }): Promise<DirectMessage> => {
   const messages = await getDirectMessages();
   const newMsg: DirectMessage = {
@@ -605,6 +664,7 @@ export const sendDirectMessage = async (msg: {
     name: msg.name.trim(),
     email: msg.email.trim(),
     message: msg.message.trim(),
+    topic: msg.topic?.trim() || "General Inquiry",
     createdAt: new Date().toISOString(),
     read: false,
   };
@@ -620,6 +680,16 @@ export const sendDirectMessage = async (msg: {
 export const markMessageRead = async (id: string): Promise<DirectMessage[]> => {
   const messages = await getDirectMessages();
   const updated = messages.map((m) => (m.id === id ? { ...m, read: true } : m));
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(updated));
+  }
+  triggerDataUpdate();
+  return updated;
+};
+
+export const markMessageReplied = async (id: string): Promise<DirectMessage[]> => {
+  const messages = await getDirectMessages();
+  const updated = messages.map((m) => (m.id === id ? { ...m, read: true, replied: true } : m));
   if (typeof window !== "undefined") {
     localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(updated));
   }
@@ -897,6 +967,91 @@ export const deleteCertificate = async (id: string): Promise<DynamicCertificate[
 };
 
 // ==========================================
+// GUESTBOOK / ENDORSEMENTS
+// ==========================================
+export interface GuestbookEntry {
+  id: string;
+  name: string;
+  role: string;
+  message: string;
+  avatarColor: string;
+  createdAt: string;
+  verified?: boolean;
+}
+
+const defaultGuestbookEntries: GuestbookEntry[] = [
+  {
+    id: "gb-1",
+    name: "Dr. A. Rahman",
+    role: "Faculty Advisor, CSE Department",
+    message: "Farhad demonstrates exceptional passion for software engineering, system design, and algorithmic problem solving. Keep up the high standard!",
+    avatarColor: "#06b6d4",
+    createdAt: "2026-03-10",
+    verified: true,
+  },
+  {
+    id: "gb-2",
+    name: "Tanvir Ahmed",
+    role: "Hackathon Teammate @ SUST Carnival",
+    message: "Working with Farhad on competitive coding and full-stack projects is always inspiring. Clean modular code and solid execution under pressure!",
+    avatarColor: "#8b5cf6",
+    createdAt: "2026-04-18",
+    verified: true,
+  },
+  {
+    id: "gb-3",
+    name: "Sarah Jenkins",
+    role: "Open Source Contributor",
+    message: "Reviewed Farhad's Next.js and TypeScript repositories — remarkably clean component boundaries and documentation.",
+    avatarColor: "#10b981",
+    createdAt: "2026-06-02",
+    verified: true,
+  },
+];
+
+const GUESTBOOK_STORAGE_KEY = "farhad_portfolio_guestbook";
+
+export const getGuestbookEntries = async (): Promise<GuestbookEntry[]> => {
+  if (typeof window === "undefined") return defaultGuestbookEntries;
+  try {
+    const raw = localStorage.getItem(GUESTBOOK_STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(GUESTBOOK_STORAGE_KEY, JSON.stringify(defaultGuestbookEntries));
+      return defaultGuestbookEntries;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return defaultGuestbookEntries;
+  }
+};
+
+export const addGuestbookEntry = async (entry: Omit<GuestbookEntry, "id" | "createdAt">): Promise<GuestbookEntry[]> => {
+  const current = await getGuestbookEntries();
+  const newEntry: GuestbookEntry = {
+    ...entry,
+    id: `gb-${Date.now()}`,
+    createdAt: new Date().toISOString().split("T")[0],
+    verified: false,
+  };
+  const updated = [newEntry, ...current];
+  if (typeof window !== "undefined") {
+    localStorage.setItem(GUESTBOOK_STORAGE_KEY, JSON.stringify(updated));
+    triggerDataUpdate();
+  }
+  return updated;
+};
+
+export const deleteGuestbookEntry = async (id: string): Promise<GuestbookEntry[]> => {
+  const current = await getGuestbookEntries();
+  const updated = current.filter((e) => e.id !== id);
+  if (typeof window !== "undefined") {
+    localStorage.setItem(GUESTBOOK_STORAGE_KEY, JSON.stringify(updated));
+    triggerDataUpdate();
+  }
+  return updated;
+};
+
+// ==========================================
 // RESET ALL TO DEFAULTS
 // ==========================================
 export const resetPortfolioData = () => {
@@ -911,6 +1066,8 @@ export const resetPortfolioData = () => {
     localStorage.removeItem(STORAGE_KEYS.SPOTLIGHT_CONFIG);
     localStorage.removeItem(STORAGE_KEYS.TESTIMONIALS);
     localStorage.removeItem(STORAGE_KEYS.CERTIFICATES);
+    localStorage.removeItem(STORAGE_KEYS.PROFILE_CONFIG);
+    localStorage.removeItem(GUESTBOOK_STORAGE_KEY);
     triggerDataUpdate();
   }
 };

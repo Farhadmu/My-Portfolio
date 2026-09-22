@@ -6,6 +6,8 @@ import { Reveal } from "./Reveal";
 import { Magnetic } from "./Magnetic";
 import { GithubIcon, LinkedinIcon, FacebookIcon, WhatsappIcon } from "./BrandIcons";
 import { track } from "./analytics";
+import { sendDirectMessage } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const socials = [
   { href: profile.github, label: "GitHub", Icon: GithubIcon },
@@ -55,39 +57,49 @@ export function Contact() {
     // Honeypot
     if (fd.get("_gotcha")) return;
 
-    if (!FORMSPREE_READY) {
-      const subject = encodeURIComponent(`[${selectedIntent}] Portfolio Contact — ${fd.get("name")}`);
-      const body = encodeURIComponent(
-        `${message}\n\n— ${fd.get("name")} (${fd.get("email")})`,
-      );
-      window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`;
-      setStatus("sent");
-      track("contact_form_submit", { method: "mailto_fallback" });
-      setTimeout(() => setStatus("idle"), 4000);
+    const senderName = (fd.get("name") as string)?.trim() || "Visitor";
+    const senderEmail = (fd.get("email") as string)?.trim() || "";
+    const brief = message.trim();
+
+    if (!senderEmail || !brief) {
+      toast.error("Please provide both your email and a message brief.");
       return;
     }
 
     setStatus("sending");
     try {
-      const res = await fetch(`https://formspree.io/f/${profile.formspreeId}`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: fd,
+      // 1. Save directly into Farhad's dashboard
+      await sendDirectMessage({
+        name: senderName,
+        email: senderEmail,
+        message: brief,
+        topic: selectedIntent,
       });
-      if (res.ok) {
-        setStatus("sent");
-        track("contact_form_submit", { method: "formspree" });
-        form.reset();
-        setMessage("");
-      } else {
-        setStatus("error");
-        track("contact_form_error");
+
+      // 2. Dispatch to Formspree if configured
+      if (FORMSPREE_READY) {
+        try {
+          await fetch(`https://formspree.io/f/${profile.formspreeId}`, {
+            method: "POST",
+            headers: { Accept: "application/json" },
+            body: fd,
+          });
+        } catch (err) {
+          console.warn("Formspree forward error:", err);
+        }
       }
-    } catch {
+
+      setStatus("sent");
+      track("contact_form_submit", { method: "dashboard_direct" });
+      toast.success("Message dispatched! Delivered directly to Farhad's dashboard.");
+      form.reset();
+      setMessage("");
+    } catch (err) {
+      console.error(err);
       setStatus("error");
-      track("contact_form_error");
+      toast.error("Could not transmit message. Please try again.");
     } finally {
-      setTimeout(() => setStatus("idle"), 4000);
+      setTimeout(() => setStatus("idle"), 4500);
     }
   };
 
@@ -285,21 +297,19 @@ export function Contact() {
                 style={{ background: "var(--gradient-brand)" }}
               >
                 {status === "sending" && <Loader2 className="size-4 animate-spin" />}
-                {status === "sent" && <Check className="size-4" />}
+                {status === "sent" && <Check className="size-4 text-emerald-300" />}
                 {status === "error" && <AlertCircle className="size-4" />}
                 {status === "idle" && <Send className="size-4" />}
-                {status === "sending" && "Dispatching Message..."}
-                {status === "sent" &&
-                  (FORMSPREE_READY ? "Message Delivered Successfully!" : "Opening your mail client...")}
+                {status === "sending" && "Dispatching to Dashboard..."}
+                {status === "sent" && "Delivered to Farhad's Dashboard!"}
                 {status === "error" && "Delivery Failed — Please Try Again"}
                 {status === "idle" && "Transmit Message"}
               </button>
             </Magnetic>
 
-            <p className="mono text-center text-[10px] text-muted-foreground">
-              {FORMSPREE_READY
-                ? `Direct transmission to ${profile.email}`
-                : `Instant email dispatch to ${profile.email}`}
+            <p className="mono text-center text-[10px] text-muted-foreground flex items-center justify-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Direct transmission to Farhad's live dashboard &amp; {profile.email}
             </p>
           </form>
         </Reveal>

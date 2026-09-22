@@ -1,12 +1,31 @@
 import { useEffect, useState } from "react";
-import { Eye, Menu, X } from "lucide-react";
+import { Eye, Menu, X, Volume2, VolumeX, FileText, Sparkles, Lock } from "lucide-react";
 import { navSections, profile } from "@/data/portfolio";
 import { Magnetic } from "./Magnetic";
+import { isSoundEnabled, setSoundEnabled, sound } from "@/lib/sound";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("home");
   const [open, setOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState(false);
+
+  useEffect(() => {
+    setSoundOn(isSoundEnabled());
+    const handleSoundChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ enabled: boolean }>;
+      if (customEvent.detail) setSoundOn(customEvent.detail.enabled);
+    };
+    window.addEventListener("portfolio_sound_changed", handleSoundChange);
+    return () => window.removeEventListener("portfolio_sound_changed", handleSoundChange);
+  }, []);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundEnabled(next);
+    setSoundOn(next);
+    if (next) sound.pop();
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -33,8 +52,15 @@ export function Navbar() {
   }, []);
 
   const go = (id: string) => {
+    sound.click();
     setOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const openResume = () => {
+    sound.pop();
+    setOpen(false);
+    window.dispatchEvent(new CustomEvent("open_resume_modal"));
   };
 
   return (
@@ -76,7 +102,7 @@ export function Navbar() {
                 onClick={() => go(s.id)}
                 className={`relative rounded-lg px-3 py-2 text-sm transition-colors ${
                   active === s.id
-                    ? "text-primary"
+                    ? "text-primary font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -90,6 +116,14 @@ export function Navbar() {
               </button>
             </li>
           ))}
+          <li>
+            <button
+              onClick={() => go("guestbook")}
+              className="relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Guestbook
+            </button>
+          </li>
           <li>
             <a
               href="/blog"
@@ -105,24 +139,44 @@ export function Navbar() {
         </ul>
 
         <div className="flex items-center gap-2">
+          {/* Sound FX Toggle */}
+          <button
+            type="button"
+            onClick={toggleSound}
+            className={`rounded-xl border p-2 transition-all ${
+              soundOn
+                ? "border-primary/50 bg-primary/10 text-primary shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                : "border-border/60 bg-secondary/40 text-muted-foreground hover:text-foreground"
+            }`}
+            title={soundOn ? "Mute developer SFX" : "Enable developer SFX"}
+            aria-label="Toggle sound effects"
+          >
+            {soundOn ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+          </button>
+
           <a
             href="/blog"
             className="lg:hidden rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary"
           >
             Blog
           </a>
+
+          {/* Quick Interactive Resume Modal Trigger */}
           <Magnetic className="hidden sm:inline-block">
-            <a
-              href={profile.resume}
-              target="_blank"
-              rel="noreferrer"
-              className="mono inline-flex items-center gap-2 rounded-xl border border-primary/40 px-3.5 py-2 text-xs text-primary transition-colors hover:bg-primary/10"
+            <button
+              type="button"
+              onClick={openResume}
+              className="mono inline-flex items-center gap-1.5 rounded-xl border border-primary/40 px-3.5 py-2 text-xs text-primary transition-all hover:bg-primary/10 hover:border-primary shadow-xs"
             >
-              <Eye className="size-3.5" /> view resume
-            </a>
+              <FileText className="size-3.5" /> View CV
+            </button>
           </Magnetic>
+
           <button
-            onClick={() => setOpen((o) => !o)}
+            onClick={() => {
+              sound.click();
+              setOpen((o) => !o);
+            }}
             className="glass grid size-10 place-items-center rounded-xl lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
@@ -136,7 +190,7 @@ export function Navbar() {
         <div className="glass mx-auto mt-2 grid max-w-6xl gap-1 rounded-2xl p-3 lg:hidden" style={{ width: "min(100% - 1.5rem, 72rem)" }}>
           {navSections.map((s) => (
             <button
-              key={s.id}
+              key={`${s.id}-${s.label}`}
               onClick={() => go(s.id)}
               className="mono rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
             >
@@ -149,20 +203,13 @@ export function Navbar() {
           >
             ~/blog [ live tech feed ]
           </a>
-          <a
-            href="/admin"
-            className="mono rounded-lg px-3 py-2.5 text-left text-xs text-muted-foreground hover:bg-secondary"
+          <button
+            type="button"
+            onClick={openResume}
+            className="mono rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-primary hover:bg-secondary"
           >
-            ~/admin [ cms portal ]
-          </a>
-          <a
-            href={profile.resume}
-            target="_blank"
-            rel="noreferrer"
-            className="mono rounded-lg px-3 py-2.5 text-sm text-primary"
-          >
-            [ view resume ]
-          </a>
+            ~/resume [ interactive cv preview ]
+          </button>
         </div>
       )}
     </header>

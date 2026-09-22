@@ -269,13 +269,29 @@ export function Skills() {
                 </DialogDescription>
               </div>
 
-              <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
-                <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Status: <strong className="text-foreground">Production Stack</strong>
-                </div>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
                 <button
                   type="button"
-                  onClick={() => setSelected(null)}
+                  onClick={() => {
+                    sound.pop();
+                    const skillName = selected.name;
+                    setSelected(null);
+                    window.dispatchEvent(
+                      new CustomEvent("portfolio_filter_skill", { detail: { skill: skillName } })
+                    );
+                    document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-all shadow-xs"
+                >
+                  <Sparkles className="size-3.5" />
+                  <span>View Projects ({selected.name}) →</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.click();
+                    setSelected(null);
+                  }}
                   className="rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
                 >
                   Close

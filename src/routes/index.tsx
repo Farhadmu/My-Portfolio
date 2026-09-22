@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { profile } from "@/data/portfolio";
 import { Loader } from "@/components/Loader";
@@ -13,10 +14,14 @@ import { Credibility } from "@/components/Credibility";
 import { GithubDash } from "@/components/GithubDash";
 import { LiveActivity } from "@/components/LiveActivity";
 import { Services } from "@/components/Services";
+import { Guestbook } from "@/components/Guestbook";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { CommandPalette } from "@/components/CommandPalette";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
+import { ResumeModal } from "@/components/ResumeModal";
+import { MessageModal } from "@/components/MessageModal";
+import { AskFarhadAI } from "@/components/AskFarhadAI";
 
 const title = "Md. Farhadul Islam — CSE Student & Frontend Developer";
 const description =
@@ -35,7 +40,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },
-      { name: "twitter:image", content: `${profile.siteUrl}/og-image.png` },
+      { property: "twitter:image", content: `${profile.siteUrl}/og-image.png` },
     ],
     links: [{ rel: "canonical", href: profile.siteUrl }],
   }),
@@ -43,6 +48,22 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [isResumeOpen, setIsResumeOpen] = useState(false);
+  const [isMessageOpen, setIsMessageOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenResume = () => setIsResumeOpen(true);
+    const handleOpenMessage = () => setIsMessageOpen(true);
+
+    window.addEventListener("open_resume_modal", handleOpenResume);
+    window.addEventListener("open_message_modal", handleOpenMessage);
+
+    return () => {
+      window.removeEventListener("open_resume_modal", handleOpenResume);
+      window.removeEventListener("open_message_modal", handleOpenMessage);
+    };
+  }, []);
+
   return (
     <div className="relative min-h-screen bg-background text-foreground">
       <Loader />
@@ -60,11 +81,21 @@ function Index() {
         <GithubDash />
         <LiveActivity />
         <Services />
+        <Guestbook />
         <Contact />
       </main>
       <Footer />
       <CommandPalette />
       <WhatsAppFloat />
+      <AskFarhadAI />
+      <ResumeModal
+        isOpen={isResumeOpen}
+        onClose={() => setIsResumeOpen(false)}
+      />
+      <MessageModal
+        isOpen={isMessageOpen}
+        onClose={() => setIsMessageOpen(false)}
+      />
     </div>
   );
 }

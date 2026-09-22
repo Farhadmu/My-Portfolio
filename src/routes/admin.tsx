@@ -34,8 +34,11 @@ import {
   CheckCircle2,
   Upload,
   Video,
-  FileVideo,
   X,
+  MessageSquareHeart,
+  Copy,
+  CornerDownRight,
+  Camera,
 } from "lucide-react";
 import { profile } from "@/data/portfolio";
 import {
@@ -67,7 +70,16 @@ import {
   isSupabaseConfigured,
   getDirectMessages,
   markMessageRead,
+  markMessageReplied,
   deleteDirectMessage,
+  getGuestbookEntries,
+  deleteGuestbookEntry,
+  getProfileConfig,
+  saveProfileConfig,
+  resetProfileConfig,
+  DEFAULT_PROFILE_CONFIG,
+  type UserProfileConfig,
+  type GuestbookEntry,
   type BlogPost,
   type DynamicProject,
   type DirectMessage,
@@ -90,7 +102,7 @@ function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcodeInput, setPasscodeInput] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "blogs" | "messages" | "projects" | "credibility" | "skills" | "experience" | "education" | "settings"
+    "blogs" | "profile" | "messages" | "guestbook" | "projects" | "credibility" | "skills" | "experience" | "education" | "settings"
   >("blogs");
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -230,12 +242,14 @@ function AdminPage() {
         {/* Navigation Tabs */}
         <div className="mb-8 flex flex-wrap gap-2 border-b border-border/40 pb-2">
           {[
-            { id: "blogs", label: "Blogs (LinkedIn Style)", icon: BookOpen },
+            { id: "blogs", label: "Blogs (Feed)", icon: BookOpen },
+            { id: "profile", label: "Profile & Cover (Blog)", icon: Camera },
             {
               id: "messages",
               label: `Messages ${unreadCount > 0 ? `(${unreadCount})` : ""}`,
               icon: MessageSquare,
             },
+            { id: "guestbook", label: "Guestbook Wall", icon: MessageSquareHeart },
             { id: "projects", label: "Projects", icon: FolderGit2 },
             { id: "credibility", label: "Credibility & Proof", icon: Award },
             { id: "skills", label: "Skills", icon: Cpu },
@@ -263,13 +277,15 @@ function AdminPage() {
 
         {/* TAB CONTENTS */}
         {activeTab === "blogs" && <BlogsManager />}
+        {activeTab === "profile" && <ProfileManager />}
         {activeTab === "messages" && <MessagesManager />}
+        {activeTab === "guestbook" && <GuestbookManager />}
         {activeTab === "projects" && <ProjectsManager />}
         {activeTab === "credibility" && <CredibilityManager />}
         {activeTab === "skills" && <SkillsManager />}
         {activeTab === "experience" && <ExperienceManager />}
         {activeTab === "education" && <EducationManager />}
-        {activeTab === "settings" && <SettingsManager />}
+        {activeTab === "settings" && <SettingsManager onGoToProfile={() => setActiveTab("profile")} />}
       </main>
 
       <Footer />
@@ -744,17 +760,22 @@ function BlogsManager() {
 }
 
 /* =========================================================
-   MESSAGES MANAGER (Messenger Style Inbox)
+   MESSAGES MANAGER (Messenger Style Inbox with Email Reply)
    ========================================================= */
 function MessagesManager() {
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [selectedMsg, setSelectedMsg] = useState<DirectMessage | null>(null);
 
+  // Email Reply Composer State
+  const [replySubject, setReplySubject] = useState("");
+  const [replyBody, setReplyBody] = useState("");
+  const [copiedReply, setCopiedReply] = useState(false);
+
   const load = () => {
     getDirectMessages().then((data) => {
       setMessages(data);
       if (data.length > 0 && !selectedMsg) {
-        setSelectedMsg(data[0]);
+        initReply(data[0]);
       }
     });
   };
@@ -763,11 +784,92 @@ function MessagesManager() {
     load();
   }, []);
 
-  const handleSelect = async (msg: DirectMessage) => {
+  const initReply = (msg: DirectMessage) => {
     setSelectedMsg(msg);
+    const subject = `Re: ${msg.topic ? `[${msg.topic}] ` : ""}Inquiry — Md. Farhadul Islam`;
+    const defaultBody = `Hi ${msg.name},\n\nThank you for reaching out through my portfolio regarding ${msg.topic || "your inquiry"}!\n\nI have reviewed your message and would love to discuss next steps with you. When would be a convenient time for a quick 15-minute call or Google Meet?\n\nAlternatively, feel free to share any additional specifications, repo links, or requirements here.\n\nLooking forward to collaborating!\n\nBest regards,\nMd. Farhadul Islam\nFull-Stack Software Engineer\nPhone / WhatsApp: +880 1945-321285\nPortfolio: ${profile.siteUrl}`;
+    setReplySubject(subject);
+    setReplyBody(defaultBody);
+  };
+
+  const handleSelect = async (msg: DirectMessage) => {
+    initReply(msg);
     if (!msg.read) {
       await markMessageRead(msg.id);
       load();
+    }
+  };
+
+  const applyTemplate = (templateType: "call" | "contract" | "details") => {
+    if (!selectedMsg) return;
+    if (templateType === "call") {
+      setReplySubject(`Re: Scheduling a Quick Call — ${selectedMsg.name} & Md. Farhadul Islam`);
+      setReplyBody(
+        `Hi ${selectedMsg.name},\n\nThank you for getting in touch! I'd be glad to discuss your requirements in detail.\n\nWould you be available for a brief 15-to-20 minute Google Meet or phone call sometime this week? Please let me know your preferred timezone and availability.\n\nBest regards,\nMd. Farhadul Islam\n${profile.phone}`
+      );
+    } else if (templateType === "contract") {
+      setReplySubject(`Re: ${selectedMsg.topic || "Contract"} Collaboration — Proposal & Timeline`);
+      setReplyBody(
+        `Hi ${selectedMsg.name},\n\nThank you for reaching out regarding ${selectedMsg.topic || "your project"}.\n\nI am currently taking on new contract engineering engagements. Based on your brief, I can deliver production-grade architecture, responsive UIs, and robust backends.\n\nCould you share a bit more on your target timeline, tech stack preferences, and scope? Once reviewed, I can provide a comprehensive roadmap.\n\nBest regards,\nMd. Farhadul Islam\n${profile.phone}`
+      );
+    } else {
+      setReplySubject(`Re: Requesting Project Specifications — Md. Farhadul Islam`);
+      setReplyBody(
+        `Hi ${selectedMsg.name},\n\nThanks for your inquiry! To make sure I give you the most accurate timeline and proposal, could you share:\n1. Key features or wireframes\n2. Desired tech stack\n3. Target launch milestone\n\nI look forward to reviewing these details with you.\n\nBest regards,\nMd. Farhadul Islam`
+      );
+    }
+    toast.success("Reply template loaded!");
+  };
+
+  const handleSendViaGmail = async () => {
+    if (!selectedMsg) return;
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      selectedMsg.email
+    )}&su=${encodeURIComponent(replySubject)}&body=${encodeURIComponent(replyBody)}`;
+    window.open(gmailUrl, "_blank");
+    await markMessageReplied(selectedMsg.id);
+    load();
+    toast.success("Gmail compose opened & marked as replied! ✨");
+  };
+
+  const handleSendViaDefaultApp = async () => {
+    if (!selectedMsg) return;
+    const mailtoUrl = `mailto:${selectedMsg.email}?subject=${encodeURIComponent(
+      replySubject
+    )}&body=${encodeURIComponent(replyBody)}`;
+    window.location.href = mailtoUrl;
+    await markMessageReplied(selectedMsg.id);
+    load();
+    toast.success("Default email client opened & marked as replied!");
+  };
+
+  const handleCopyReply = () => {
+    if (!selectedMsg) return;
+    const textToCopy = `To: ${selectedMsg.email}\nSubject: ${replySubject}\n\n${replyBody}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(textToCopy);
+      setCopiedReply(true);
+      toast.success("Reply draft & recipient copied to clipboard!");
+      setTimeout(() => setCopiedReply(false), 2500);
+    }
+  };
+
+  const handleToggleReplied = async () => {
+    if (!selectedMsg) return;
+    if (selectedMsg.replied) {
+      // unmark replied
+      const updated = messages.map((m) =>
+        m.id === selectedMsg.id ? { ...m, replied: false } : m
+      );
+      localStorage.setItem("farhad_portfolio_messages", JSON.stringify(updated));
+      setSelectedMsg({ ...selectedMsg, replied: false });
+      load();
+      toast.info("Marked as pending reply.");
+    } else {
+      await markMessageReplied(selectedMsg.id);
+      setSelectedMsg({ ...selectedMsg, replied: true });
+      load();
+      toast.success("Marked as replied! ✓");
     }
   };
 
@@ -782,18 +884,23 @@ function MessagesManager() {
 
   return (
     <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xl">
-      <div className="p-4 border-b border-border/60 flex items-center justify-between">
+      <div className="p-4 border-b border-border/60 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <MessageSquare className="size-4 text-primary" /> Visitor Messages & Inquiries
+            <MessageSquare className="size-4 text-primary" /> Visitor Messages &amp; Inquiries
           </h2>
           <p className="text-xs text-muted-foreground">
-            Messages sent by visitors directly from your blog and portfolio.
+            Messages sent by visitors directly from your home screen and blog, with 1-click email response.
           </p>
         </div>
-        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-          {messages.length} messages
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            {messages.length} Total Messages
+          </span>
+          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
+            {messages.filter((m) => m.replied).length} Replied
+          </span>
+        </div>
       </div>
 
       {messages.length === 0 ? (
@@ -801,87 +908,334 @@ function MessagesManager() {
           <Mail className="mx-auto size-12 text-muted-foreground/40" />
           <h3 className="mt-3 text-sm font-semibold">No messages yet</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            When visitors reach out to you from your blog, their messages will appear here.
+            When visitors send a message through your home screen or contact form, it will appear here.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] min-h-[460px]">
+        <div className="grid grid-cols-1 md:grid-cols-[330px_1fr] min-h-[580px]">
           {/* Messages list (Left side like Messenger) */}
-          <div className="border-r border-border/60 divide-y divide-border/40 max-h-[520px] overflow-y-auto">
+          <div className="border-r border-border/60 divide-y divide-border/40 max-h-[680px] overflow-y-auto bg-card/50">
             {messages.map((m) => (
               <button
                 key={m.id}
                 onClick={() => handleSelect(m)}
-                className={`w-full text-left p-3.5 transition-colors flex items-start gap-3 ${
+                className={`w-full text-left p-3.5 transition-all flex items-start gap-3 ${
                   selectedMsg?.id === m.id
-                    ? "bg-secondary/80"
+                    ? "bg-secondary/90 border-l-2 border-primary"
                     : "hover:bg-secondary/40"
                 } ${!m.read ? "bg-primary/5" : ""}`}
               >
-                <div className="size-9 rounded-full bg-primary/20 text-primary font-bold text-xs grid place-items-center shrink-0">
+                <div className="size-9 rounded-full bg-primary/20 text-primary font-bold text-xs grid place-items-center shrink-0 border border-primary/30">
                   {m.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
                     <span className="text-xs font-bold text-foreground truncate">{m.name}</span>
-                    {!m.read && (
-                      <span className="size-2 rounded-full bg-primary shrink-0" />
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {m.replied && (
+                        <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1 py-0.2 text-[9px] font-bold text-emerald-400">
+                          Replied ✓
+                        </span>
+                      )}
+                      {!m.read && (
+                        <span className="size-2 rounded-full bg-primary shrink-0" />
+                      )}
+                    </div>
                   </div>
+                  {m.topic && (
+                    <span className="mt-0.5 inline-block rounded border border-primary/30 bg-primary/10 px-1.5 py-0.2 text-[9px] font-semibold text-primary">
+                      {m.topic}
+                    </span>
+                  )}
                   <p className="text-[11px] text-muted-foreground truncate mt-0.5">{m.message}</p>
-                  <span className="text-[10px] text-muted-foreground/80 mt-1 block">
-                    {new Date(m.createdAt).toLocaleDateString()}
+                  <span className="text-[10px] text-muted-foreground/80 mt-1 block font-mono">
+                    {new Date(m.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </span>
                 </div>
               </button>
             ))}
           </div>
 
-          {/* Message content (Right side) */}
-          <div className="p-6 flex flex-col justify-between">
+          {/* Message content & Email Reply Composer (Right side) */}
+          <div className="p-5 sm:p-7 flex flex-col justify-between overflow-y-auto max-h-[680px]">
             {selectedMsg ? (
-              <div>
-                <div className="flex items-start justify-between border-b border-border/40 pb-4">
+              <div className="space-y-6">
+                {/* Header Information */}
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/40 pb-4">
                   <div>
-                    <h3 className="text-base font-bold text-foreground">{selectedMsg.name}</h3>
-                    <a
-                      href={`mailto:${selectedMsg.email}`}
-                      className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5"
-                    >
-                      <Mail className="size-3.5" /> {selectedMsg.email}
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-foreground">{selectedMsg.name}</h3>
+                      {selectedMsg.topic && (
+                        <span className="rounded-md bg-primary/15 border border-primary/30 px-2 py-0.5 text-xs font-semibold text-primary">
+                          {selectedMsg.topic}
+                        </span>
+                      )}
+                      {selectedMsg.replied ? (
+                        <span className="rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-xs font-bold text-emerald-400 flex items-center gap-1">
+                          <Check className="size-3" /> Replied
+                        </span>
+                      ) : (
+                        <span className="rounded-md bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-xs font-medium text-amber-400">
+                          Awaiting Reply
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-2">
+                      <a
+                        href={`mailto:${selectedMsg.email}`}
+                        className="text-xs text-primary hover:underline font-mono inline-flex items-center gap-1"
+                      >
+                        <Mail className="size-3.5" /> {selectedMsg.email}
+                      </a>
+                    </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(selectedMsg.createdAt).toLocaleString()}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {new Date(selectedMsg.createdAt).toLocaleString()}
+                    </span>
+                    <button
+                      onClick={() => handleDelete(selectedMsg.id)}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+                      title="Delete message"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Received Visitor Message Card */}
+                <div>
+                  <span className="mono mb-1.5 block text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                    Received Message Brief:
                   </span>
+                  <div className="rounded-xl border border-border/60 bg-secondary/30 p-4 sm:p-5 text-sm leading-relaxed text-foreground whitespace-pre-wrap font-sans shadow-xs">
+                    {selectedMsg.message}
+                  </div>
                 </div>
 
-                <div className="mt-6 rounded-xl border border-border/50 bg-secondary/30 p-5 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                  {selectedMsg.message}
-                </div>
+                {/* Interactive Email Reply Composer */}
+                <div className="rounded-2xl border border-primary/30 bg-card p-4 sm:p-5 shadow-sm space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="grid size-7 place-items-center rounded-lg bg-primary/15 border border-primary/30 text-primary">
+                        <CornerDownRight className="size-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">Reply via Email to {selectedMsg.name}</h4>
+                        <p className="text-[11px] text-muted-foreground">
+                          Draft your response and dispatch with 1-click via Gmail Web or your email client.
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="mt-8 flex items-center justify-between border-t border-border/40 pt-4">
-                  <a
-                    href={`mailto:${selectedMsg.email}?subject=Reply from Md. Farhadul Islam&body=Hi ${selectedMsg.name},%0D%0A%0D%0AThank you for reaching out!`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    <Send className="size-3.5" /> Reply via Email
-                  </a>
+                    {/* Quick Template Pills */}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => applyTemplate("call")}
+                        className="rounded-md border border-border/60 bg-secondary/50 px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      >
+                        📞 Schedule Call
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyTemplate("contract")}
+                        className="rounded-md border border-border/60 bg-secondary/50 px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      >
+                        💼 Discuss Project
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyTemplate("details")}
+                        className="rounded-md border border-border/60 bg-secondary/50 px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      >
+                        📋 Request Details
+                      </button>
+                    </div>
+                  </div>
 
-                  <button
-                    onClick={() => handleDelete(selectedMsg.id)}
-                    className="inline-flex items-center gap-1.5 text-xs text-rose-500 hover:text-rose-400"
-                  >
-                    <Trash2 className="size-3.5" /> Delete Message
-                  </button>
+                  {/* Subject Input */}
+                  <div>
+                    <label className="mono mb-1 block text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                      Email Subject
+                    </label>
+                    <input
+                      type="text"
+                      value={replySubject}
+                      onChange={(e) => setReplySubject(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs font-medium text-foreground outline-none focus:border-primary/60"
+                    />
+                  </div>
+
+                  {/* Body Textarea */}
+                  <div>
+                    <label className="mono mb-1 block text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                      Reply Message
+                    </label>
+                    <textarea
+                      rows={7}
+                      value={replyBody}
+                      onChange={(e) => setReplyBody(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-secondary/40 p-3 text-xs leading-relaxed text-foreground outline-none focus:border-primary/60 font-sans"
+                    />
+                  </div>
+
+                  {/* Dispatch Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Primary Gmail Web 1-Click Button */}
+                      <button
+                        type="button"
+                        onClick={handleSendViaGmail}
+                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-rose-500/20 hover:from-rose-600 hover:to-red-700 transition-all hover:scale-[1.02]"
+                      >
+                        <Send className="size-3.5" />
+                        <span>Send with Gmail Web (1-Click)</span>
+                        <ExternalLink className="size-3 opacity-75" />
+                      </button>
+
+                      {/* Default Mail Client Button */}
+                      <button
+                        type="button"
+                        onClick={handleSendViaDefaultApp}
+                        className="inline-flex items-center gap-2 rounded-xl border border-primary/50 bg-primary/10 px-3.5 py-2.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <Mail className="size-3.5" />
+                        <span>Default Mail App</span>
+                      </button>
+
+                      {/* Copy to Clipboard */}
+                      <button
+                        type="button"
+                        onClick={handleCopyReply}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      >
+                        {copiedReply ? (
+                          <>
+                            <Check className="size-3.5 text-emerald-400" />
+                            <span className="text-emerald-400">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="size-3.5" />
+                            <span>Copy Draft</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleToggleReplied}
+                      className={`text-xs font-medium underline underline-offset-4 transition-colors ${
+                        selectedMsg.replied
+                          ? "text-muted-foreground hover:text-foreground"
+                          : "text-emerald-400 hover:text-emerald-300"
+                      }`}
+                    >
+                      {selectedMsg.replied ? "Unmark Replied" : "Mark as Replied"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-20 text-muted-foreground text-xs">
-                Select a message to view details
+              <div className="text-center py-24 text-muted-foreground text-xs">
+                <Mail className="mx-auto size-8 text-muted-foreground/40 mb-2" />
+                Select a message on the left to read and send an email reply.
               </div>
             )}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   GUESTBOOK MANAGER (Community Moderation)
+   ========================================================= */
+function GuestbookManager() {
+  const [entries, setEntries] = useState<GuestbookEntry[]>([]);
+
+  const load = () => {
+    getGuestbookEntries().then(setEntries);
+  };
+
+  useEffect(() => {
+    load();
+    window.addEventListener("portfolio_data_changed", load);
+    return () => window.removeEventListener("portfolio_data_changed", load);
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this guestbook message?")) return;
+    const updated = await deleteGuestbookEntry(id);
+    setEntries(updated);
+    toast.success("Guestbook entry removed.");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">
+            Visitor & Recruiter Endorsements ({entries.length})
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Review and moderate messages left by visitors, colleagues, and recruiters.
+          </p>
+        </div>
+      </div>
+
+      {entries.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border/80 p-12 text-center text-muted-foreground">
+          <MessageSquareHeart className="mx-auto size-8 mb-2 opacity-50" />
+          <p className="text-sm">No guestbook entries found.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {entries.map((entry) => (
+            <div
+              key={entry.id}
+              className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="grid size-8 place-items-center rounded-lg text-xs font-bold text-white"
+                      style={{ backgroundColor: entry.avatarColor || "#06b6d4" }}
+                    >
+                      {entry.name.slice(0, 2).toUpperCase()}
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground">{entry.name}</h4>
+                      <p className="text-[11px] text-muted-foreground">{entry.role}</p>
+                    </div>
+                  </div>
+                  <span className="mono text-[10px] text-muted-foreground">{entry.createdAt}</span>
+                </div>
+
+                <p className="text-xs text-muted-foreground leading-relaxed italic">
+                  "{entry.message}"
+                </p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-border/30 flex justify-end">
+                <button
+                  onClick={() => handleDelete(entry.id)}
+                  className="inline-flex items-center gap-1 text-xs text-rose-500 hover:text-rose-400 font-medium"
+                >
+                  <Trash2 className="size-3.5" /> Delete Entry
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -2685,9 +3039,480 @@ function EducationManager() {
 }
 
 /* =========================================================
-   6. SETTINGS & DB SYNC MANAGER
+   6. PROFILE & BLOG COVER MANAGER
    ========================================================= */
-function SettingsManager() {
+const COVER_PRESETS = [
+  {
+    name: "Cyber Matrix & Deep Violet",
+    url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop",
+    desc: "Vibrant violet & cyan cyber mesh",
+  },
+  {
+    name: "Quantum Circuit & Neon Glow",
+    url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1920&auto=format&fit=crop",
+    desc: "Glowing hardware traces & architecture",
+  },
+  {
+    name: "Minimalist Developer Space",
+    url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1920&auto=format&fit=crop",
+    desc: "Sleek retro-futuristic dark work desk",
+  },
+  {
+    name: "Terminal & Code Streams",
+    url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1920&auto=format&fit=crop",
+    desc: "High-contrast developer terminal lines",
+  },
+  {
+    name: "Deep Space Quantum Flow",
+    url: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1920&auto=format&fit=crop",
+    desc: "Cosmic waves and radiant purple glow",
+  },
+];
+
+function ProfileManager() {
+  const initial = getProfileConfig();
+  const [avatar, setAvatar] = useState(initial.avatar || profile.photo);
+  const [coverImage, setCoverImage] = useState(initial.coverImage);
+  const [name, setName] = useState(initial.name || profile.name);
+  const [subRole, setSubRole] = useState(initial.subRole || "");
+  const [bio, setBio] = useState(initial.bio || "");
+  const [educationTag, setEducationTag] = useState(initial.educationTag || "");
+  const [architectureTag, setArchitectureTag] = useState(initial.architectureTag || "");
+  const [activeTag, setActiveTag] = useState(initial.activeTag || "");
+  const [avatarUploadName, setAvatarUploadName] = useState("");
+  const [coverUploadName, setCoverUploadName] = useState("");
+
+  const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Avatar image file size exceeds 10MB limit.");
+      return;
+    }
+    setAvatarUploadName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setAvatar(event.target.result as string);
+        toast.success(`Photo "${file.name}" loaded as avatar!`);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCoverFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Cover banner image file size exceeds 15MB limit.");
+      return;
+    }
+    setCoverUploadName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setCoverImage(event.target.result as string);
+        toast.success(`Cover banner "${file.name}" loaded!`);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    saveProfileConfig({
+      avatar,
+      coverImage,
+      name,
+      subRole,
+      bio,
+      educationTag,
+      architectureTag,
+      activeTag,
+    });
+    toast.success("Profile avatar, cover banner, and bio updated successfully!");
+  };
+
+  const handleReset = () => {
+    if (confirm("Reset profile branding and cover banner back to original defaults?")) {
+      const def = resetProfileConfig();
+      setAvatar(def.avatar);
+      setCoverImage(def.coverImage);
+      setName(def.name);
+      setSubRole(def.subRole);
+      setBio(def.bio);
+      setEducationTag(def.educationTag);
+      setArchitectureTag(def.architectureTag);
+      setActiveTag(def.activeTag);
+      setAvatarUploadName("");
+      setCoverUploadName("");
+      toast.info("Reset to default profile branding.");
+    }
+  };
+
+  return (
+    <div className="space-y-8 max-w-4xl">
+      {/* Header Info */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl flex items-center gap-2">
+            <Camera className="size-6 text-primary" /> Profile &amp; Blog Cover Customizer
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Change your profile photo, upload or choose high-tech cover banners for your blog header, and customize your author bio.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            to="/blog"
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-medium text-foreground hover:bg-secondary/80 shadow-xs"
+          >
+            <Eye className="size-3.5" /> View Live Blog ↗
+          </Link>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
+          >
+            <Save className="size-3.5" /> Save Changes
+          </button>
+        </div>
+      </div>
+
+      {/* LIVE PREVIEW BANNER CARD */}
+      <div className="rounded-3xl border border-border/80 bg-card/60 p-5 backdrop-blur-md shadow-xl space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="mono text-xs font-semibold text-primary flex items-center gap-1.5">
+            <Sparkles className="size-3.5" /> Live Preview of Blog Author Banner
+          </span>
+          <span className="text-[11px] text-muted-foreground">Updates in real-time as you edit below</span>
+        </div>
+
+        {/* Scaled Preview Box */}
+        <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-lg">
+          <div className="relative h-36 sm:h-48 w-full overflow-hidden">
+            <img
+              src={coverImage || DEFAULT_PROFILE_CONFIG.coverImage}
+              alt="Cover preview"
+              className="h-full w-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-black/40" />
+            <div className="absolute inset-0 bg-[radial-gradient(#ffffff15_1px,transparent_1px)] [background-size:18px_18px] opacity-70" />
+            <div className="absolute top-3 right-3 hidden sm:flex items-center gap-1.5 rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[10px] mono text-white/90 backdrop-blur-md">
+              <Sparkles className="size-3 text-cyan-400" />
+              <span>Engineering Publication</span>
+            </div>
+          </div>
+
+          <div className="px-5 pb-5 pt-0">
+            <div className="flex items-end justify-between -mt-12 sm:-mt-14 mb-3">
+              <div className="relative">
+                <img
+                  src={avatar || profile.photo}
+                  alt={name}
+                  className="size-20 sm:size-24 rounded-2xl border-4 border-card object-cover shadow-2xl ring-2 ring-primary/40"
+                />
+                <span className="absolute bottom-1 right-1 size-3.5 rounded-full bg-emerald-500 border-2 border-card ring-2 ring-emerald-400/50" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
+                  Message Farhad
+                </span>
+                <span className="rounded-xl border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-foreground">
+                  Connect on LinkedIn ↗
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">{name || profile.name}</h3>
+                <CheckCircle2 className="size-4 text-primary" />
+              </div>
+              <p className="text-xs text-foreground/90 font-medium mt-0.5">{subRole}</p>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-2xl line-clamp-2">{bio}</p>
+
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                <span className="mono rounded-md border border-border/80 bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold text-foreground/90">
+                  {educationTag}
+                </span>
+                <span className="mono rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  {architectureTag}
+                </span>
+                <span className="mono rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                  {activeTag}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* 1. COVER BANNER CONTROLS */}
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <ImageIcon className="size-4 text-primary" /> Blog &amp; Profile Cover Banner
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Upload a custom banner image from your device or choose from curated engineering presets.
+              </p>
+            </div>
+            {coverImage !== DEFAULT_PROFILE_CONFIG.coverImage && (
+              <button
+                type="button"
+                onClick={() => setCoverImage(DEFAULT_PROFILE_CONFIG.coverImage)}
+                className="text-xs text-primary hover:underline"
+              >
+                Reset to Default Cover
+              </button>
+            )}
+          </div>
+
+          {/* Upload file + URL input */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* File Upload Box */}
+            <div className="rounded-xl border border-dashed border-border/80 bg-secondary/30 p-4 text-center hover:border-primary/50 transition-colors">
+              <Upload className="mx-auto size-6 text-muted-foreground mb-2" />
+              <label className="cursor-pointer text-xs font-semibold text-primary hover:underline">
+                Upload Cover from Computer
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverFileUpload}
+                  className="hidden"
+                />
+              </label>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {coverUploadName ? `Selected: ${coverUploadName}` : "Supports PNG, JPG, WEBP (Max 15MB)"}
+              </p>
+            </div>
+
+            {/* Direct Image URL */}
+            <div className="space-y-1.5 flex flex-col justify-center">
+              <label className="text-xs font-medium text-foreground">Or Direct Image URL</label>
+              <input
+                type="url"
+                placeholder="https://images.unsplash.com/..."
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+              <span className="text-[10px] text-muted-foreground">You can paste any web image URL here</span>
+            </div>
+          </div>
+
+          {/* Curated Presets */}
+          <div>
+            <label className="text-xs font-semibold text-foreground mb-2 block">
+              1-Click Engineering Cover Presets:
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+              {COVER_PRESETS.map((preset) => (
+                <button
+                  key={preset.name}
+                  type="button"
+                  onClick={() => {
+                    setCoverImage(preset.url);
+                    toast.success(`Applied preset: ${preset.name}`);
+                  }}
+                  className={`group relative overflow-hidden rounded-xl border p-1 text-left transition-all ${
+                    coverImage === preset.url
+                      ? "border-primary ring-2 ring-primary/40"
+                      : "border-border/60 hover:border-primary/50"
+                  }`}
+                >
+                  <div className="h-16 w-full overflow-hidden rounded-lg">
+                    <img
+                      src={preset.url}
+                      alt={preset.name}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-1.5">
+                    <div className="text-[11px] font-semibold text-foreground line-clamp-1">
+                      {preset.name}
+                    </div>
+                    <div className="text-[9px] text-muted-foreground line-clamp-1">{preset.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 2. PROFILE PICTURE / AVATAR CONTROLS */}
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Camera className="size-4 text-primary" /> Profile Picture / Avatar
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Upload your profile photo from your device or provide a direct image link.
+              </p>
+            </div>
+            {avatar !== profile.photo && (
+              <button
+                type="button"
+                onClick={() => setAvatar(profile.photo)}
+                className="text-xs text-primary hover:underline"
+              >
+                Use Default Farhad Photo
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-5">
+            {/* Avatar Round Preview */}
+            <div className="relative shrink-0">
+              <img
+                src={avatar || profile.photo}
+                alt="Avatar preview"
+                className="size-24 rounded-2xl border-2 border-primary/40 object-cover shadow-md"
+              />
+              <span className="absolute -bottom-1 -right-1 rounded-full bg-emerald-500 p-1 ring-2 ring-card text-white">
+                <Check className="size-3" />
+              </span>
+            </div>
+
+            <div className="flex-1 w-full space-y-3">
+              {/* File Upload Box */}
+              <div className="rounded-xl border border-dashed border-border/80 bg-secondary/30 p-3.5 text-center hover:border-primary/50 transition-colors">
+                <Upload className="mx-auto size-5 text-muted-foreground mb-1.5" />
+                <label className="cursor-pointer text-xs font-semibold text-primary hover:underline">
+                  Upload Photo from Computer
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarFileUpload}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {avatarUploadName ? `Selected: ${avatarUploadName}` : "Supports PNG, JPG, WEBP, GIF (Max 10MB)"}
+                </p>
+              </div>
+
+              {/* Direct URL */}
+              <div>
+                <label className="text-xs font-medium text-foreground block mb-1">Or Avatar Image URL</label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={avatar}
+                  onChange={(e) => setAvatar(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. AUTHOR IDENTITY & BIO DETAILS */}
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm space-y-4">
+          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            <BookOpen className="size-4 text-primary" /> Author Profile &amp; Bio Information
+          </h3>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-xs font-medium text-foreground block mb-1">Display Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-foreground block mb-1">Sub-role / Headline</label>
+              <input
+                type="text"
+                value={subRole}
+                onChange={(e) => setSubRole(e.target.value)}
+                className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-foreground block mb-1">Author Bio / Publication Synopsis</label>
+            <textarea
+              rows={3}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none resize-none leading-relaxed"
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="text-xs font-medium text-foreground block mb-1">Education Tag</label>
+              <input
+                type="text"
+                value={educationTag}
+                onChange={(e) => setEducationTag(e.target.value)}
+                className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-foreground block mb-1">Architecture Tag</label>
+              <input
+                type="text"
+                value={architectureTag}
+                onChange={(e) => setArchitectureTag(e.target.value)}
+                className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-foreground block mb-1">Activity Tag</label>
+              <input
+                type="text"
+                value={activeTag}
+                onChange={(e) => setActiveTag(e.target.value)}
+                className="w-full rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Save / Reset Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="rounded-xl border border-border/80 bg-secondary/50 px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            Reset All Profile Defaults
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+            >
+              <Save className="size-4" /> Save Profile &amp; Cover Changes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* =========================================================
+   7. SETTINGS & DB SYNC MANAGER
+   ========================================================= */
+function SettingsManager({ onGoToProfile }: { onGoToProfile?: () => void }) {
   const [newPasscode, setNewPasscode] = useState("");
   const currentPasscode = getAdminPasscode();
 
@@ -2712,6 +3537,26 @@ function SettingsManager() {
 
   return (
     <div className="space-y-8 max-w-3xl">
+      {/* Profile & Blog Cover Banner Card */}
+      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            <Camera className="size-4 text-primary" /> Profile Picture &amp; Blog Cover Banner
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Customize your profile avatar photo, blog header cover image, and author headline with live preview.
+          </p>
+        </div>
+        {onGoToProfile && (
+          <button
+            type="button"
+            onClick={onGoToProfile}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 shadow-md transition-all"
+          >
+            <Camera className="size-3.5" /> Open Profile &amp; Cover Settings →
+          </button>
+        )}
+      </div>
       {/* Cloud Database Status */}
       <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
         <h3 className="text-base font-bold flex items-center gap-2 text-foreground">

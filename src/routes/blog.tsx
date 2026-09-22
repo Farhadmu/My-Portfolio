@@ -27,6 +27,8 @@ import {
   Play,
   Video,
   ArrowUpRight,
+  Layers,
+  Camera,
 } from "lucide-react";
 import { profile } from "@/data/portfolio";
 import { useDynamicBlogs } from "@/hooks/usePortfolioData";
@@ -34,8 +36,10 @@ import {
   reactToBlogPost,
   addCommentToBlogPost,
   sendDirectMessage,
+  getProfileConfig,
   type BlogPost,
   type BlogComment,
+  type UserProfileConfig,
 } from "@/lib/supabase";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -151,6 +155,7 @@ function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedBlog, setSelectedBlog] = useState<BlogPost | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [feedView, setFeedView] = useState<"split" | "articles" | "videos">("split");
 
   // Auth / Guest state
   const [isAdmin, setIsAdmin] = useState(false);
@@ -170,10 +175,19 @@ function BlogPage() {
   // Reaction popover or fast reaction tracking
   const [userReactions, setUserReactions] = useState<Record<string, string>>({});
 
+  // Dynamic Profile & Cover configuration
+  const [profileConfig, setProfileConfig] = useState<UserProfileConfig>(getProfileConfig);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsAdmin(sessionStorage.getItem("farhad_admin_authed") === "true");
     }
+
+    const handleDataChanged = () => {
+      setProfileConfig(getProfileConfig());
+    };
+    window.addEventListener("portfolio_data_changed", handleDataChanged);
+    return () => window.removeEventListener("portfolio_data_changed", handleDataChanged);
   }, []);
 
   // Sync selected blog when data updates
@@ -198,6 +212,9 @@ function BlogPage() {
       blog.tags.some((t) => t.toLowerCase().includes(q));
     return matchesCat && matchesSearch;
   });
+
+  const videoPosts = filteredBlogs.filter((b) => Boolean(b.videoUrl && b.videoUrl.trim()));
+  const articlePosts = filteredBlogs.filter((b) => !b.videoUrl || !b.videoUrl.trim());
 
   // Handle reaction (Like, Love, Insightful, Celebrate)
   const handleReaction = async (
@@ -281,13 +298,244 @@ function BlogPage() {
     }
   };
 
+  const renderBlogCard = (blog: BlogPost, isVideoCard: boolean = false) => {
+    const totalReactions =
+      (blog.reactions?.like || 0) +
+      (blog.reactions?.love || 0) +
+      (blog.reactions?.insightful || 0) +
+      (blog.reactions?.celebrate || 0) ||
+      blog.likes ||
+      0;
+    const commentsCount = blog.comments?.length || 0;
+    const isVideo = Boolean(blog.videoUrl && blog.videoUrl.trim());
+
+    return (
+      <article
+        key={blog.id}
+        id={blog.slug}
+        onClick={() => setSelectedBlog(blog)}
+        className={`group relative cursor-pointer overflow-hidden rounded-2xl border bg-card/60 p-5 sm:p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1.5 hover:bg-card/90 ${
+          isVideo
+            ? "border-rose-500/25 hover:border-rose-500/60 hover:shadow-[0_20px_45px_-10px_rgba(244,63,94,0.18)]"
+            : "border-border/70 hover:border-primary/60 hover:shadow-[0_20px_45px_-10px_rgba(6,182,212,0.18)]"
+        }`}
+      >
+        {/* Subtle top ambient indicator on hover */}
+        <div
+          className={`absolute top-0 inset-x-8 h-[2px] bg-gradient-to-r from-transparent via-transparent to-transparent transition-all duration-300 ${
+            isVideo ? "group-hover:via-rose-500" : "group-hover:via-primary"
+          }`}
+        />
+
+        {/* Author Row */}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <img
+                src={blog.authorAvatar || profileConfig.avatar || profile.photo}
+                alt={blog.authorName}
+                className={`size-10 rounded-full border object-cover ring-2 transition-transform duration-300 group-hover:scale-105 ${
+                  isVideo ? "border-rose-500/40 ring-rose-500/20" : "border-primary/40 ring-primary/20"
+                }`}
+              />
+              <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`text-sm font-semibold text-foreground transition-colors ${
+                    isVideo ? "group-hover:text-rose-400" : "group-hover:text-primary"
+                  }`}
+                >
+                  {blog.authorName}
+                </span>
+                <span
+                  className={`rounded-md border px-1.5 py-0.2 text-[9px] font-semibold ${
+                    isVideo
+                      ? "bg-rose-500/15 border-rose-500/30 text-rose-400"
+                      : "bg-primary/15 border-primary/30 text-primary"
+                  }`}
+                >
+                  Author
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>
+                  {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1">
+                  <Clock className={`size-3 ${isVideo ? "text-rose-400/80" : "text-primary/70"}`} />
+                  {blog.readTime}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {blog.videoUrl && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.2)]">
+                <Play className="size-3 fill-rose-400" />
+                Video Breakdown
+              </span>
+            )}
+            <span className="rounded-full border border-border/70 bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground transition-colors group-hover:border-primary/40">
+              {blog.category}
+            </span>
+          </div>
+        </div>
+
+        {/* Title & Excerpt */}
+        <div className="flex items-start justify-between gap-4">
+          <h2
+            className={`text-xl font-bold tracking-tight text-foreground transition-colors duration-200 sm:text-2xl ${
+              isVideo ? "group-hover:text-rose-400" : "group-hover:text-primary"
+            }`}
+          >
+            {blog.title}
+          </h2>
+          <span
+            className={`hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors shrink-0 pt-1 ${
+              isVideo ? "group-hover:text-rose-400" : "group-hover:text-primary"
+            }`}
+          >
+            {isVideo ? "Watch" : "Read"}{" "}
+            <ArrowUpRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </span>
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
+          {blog.excerpt}
+        </p>
+
+        {/* Video Player or Cover Image */}
+        {blog.videoUrl ? (
+          <div
+            className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-black/90 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <VideoPlayer url={blog.videoUrl} title={blog.title} />
+          </div>
+        ) : blog.coverImage ? (
+          <div className="mt-4 overflow-hidden rounded-xl border border-border/50">
+            <img
+              src={blog.coverImage}
+              alt={blog.title}
+              loading="lazy"
+              className="h-56 w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] sm:h-72"
+            />
+          </div>
+        ) : null}
+
+        {/* Tags */}
+        {blog.tags && blog.tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {blog.tags.map((tag) => (
+              <span
+                key={tag}
+                className={`inline-flex items-center gap-1 rounded-md border border-border/40 bg-secondary/70 px-2 py-0.5 text-xs text-muted-foreground transition-colors ${
+                  isVideo ? "group-hover:border-rose-500/30" : "group-hover:border-primary/30"
+                }`}
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Reaction counts counter */}
+        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground border-t border-border/30 pt-3">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex -space-x-1">
+              <span className="grid size-4 place-items-center rounded-full bg-blue-500 text-[9px] text-white shadow-sm">
+                👍
+              </span>
+              <span className="grid size-4 place-items-center rounded-full bg-rose-500 text-[9px] text-white shadow-sm">
+                ❤️
+              </span>
+              <span className="grid size-4 place-items-center rounded-full bg-amber-500 text-[9px] text-white shadow-sm">
+                💡
+              </span>
+            </span>
+            <span className="font-medium">{totalReactions} reactions</span>
+          </div>
+
+          <span
+            className={`transition-colors hover:underline ${
+              isVideo ? "hover:text-rose-400" : "hover:text-primary"
+            }`}
+          >
+            {commentsCount > 0 ? `${commentsCount} comments` : "Be the first to comment"}
+          </span>
+        </div>
+
+        {/* Action Buttons Bar */}
+        <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={(e) => handleReaction(e, blog.id, "like")}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-blue-400 transition-colors"
+            >
+              <ThumbsUp className="size-3.5" />
+              <span>Like</span>
+            </button>
+            <button
+              onClick={(e) => handleReaction(e, blog.id, "love")}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-rose-400 transition-colors"
+            >
+              <Heart className="size-3.5" />
+              <span>Love</span>
+            </button>
+            <button
+              onClick={(e) => handleReaction(e, blog.id, "insightful")}
+              className="hidden xs:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-amber-400 transition-colors"
+            >
+              <Lightbulb className="size-3.5" />
+              <span>Insightful</span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedBlog(blog);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            >
+              <MessageSquare className="size-3.5" />
+              <span>Comment</span>
+            </button>
+          </div>
+
+          <button
+            onClick={(e) => handleShare(e, blog)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+          >
+            {copiedId === blog.id ? (
+              <>
+                <Check className="size-3.5 text-emerald-400" />
+                <span className="text-emerald-400">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="size-3.5" />
+                <span>Share</span>
+              </>
+            )}
+          </button>
+        </div>
+      </article>
+    );
+  };
+
   return (
     <div className="relative min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary">
       <ScrollProgress />
       <CursorGlow />
       <Navbar />
 
-      <main className="mx-auto max-w-5xl px-4 pt-28 pb-20 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 pt-28 pb-20 sm:px-6">
         {/* Top Back & Optional Admin Link */}
         <div className="mb-6 flex items-center justify-between">
           <Link
@@ -318,36 +566,61 @@ function BlogPage() {
 
         {/* Tech Publication Creator Profile Header */}
         <div className="mb-10 overflow-hidden rounded-3xl border border-border/80 bg-card/80 backdrop-blur-md shadow-2xl transition-all">
-          {/* Animated Cyber Mesh Gradient Banner */}
-          <div
-            className="h-32 sm:h-44 w-full relative overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(6,182,212,0.3) 0%, rgba(139,92,246,0.35) 45%, rgba(236,72,153,0.25) 100%)",
-            }}
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(#ffffff18_1px,transparent_1px)] [background-size:18px_18px]" />
-            <div className="absolute -right-12 -top-12 size-52 rounded-full bg-primary/20 blur-3xl animate-pulse" />
-            <div className="absolute -left-12 -bottom-12 size-52 rounded-full bg-violet-500/25 blur-3xl animate-pulse" />
-            <div className="absolute top-4 right-4 hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[11px] mono text-white/90 backdrop-blur-md">
-              <Sparkles className="size-3 text-cyan-400" />
-              <span>Engineering Publication</span>
+          {/* Aesthetic Cyber Engineering Cover Banner */}
+          <div className="group/cover relative h-40 w-full overflow-hidden sm:h-56">
+            <img
+              src={profileConfig.coverImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop"}
+              alt="Engineering Cover Banner"
+              className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover/cover:scale-105"
+            />
+            {/* Ambient gradients, tech grid texture, and subtle vignette */}
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/35 to-black/50" />
+            <div className="absolute inset-0 bg-[radial-gradient(#ffffff15_1px,transparent_1px)] [background-size:20px_20px] opacity-70" />
+            <div className="absolute -right-12 -top-12 size-56 rounded-full bg-primary/25 blur-3xl" />
+            <div className="absolute -left-12 -bottom-12 size-56 rounded-full bg-violet-500/25 blur-3xl" />
+
+            {/* Badges on cover */}
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-1.5 rounded-full border border-primary/40 bg-black/60 px-3 py-1.5 text-xs mono font-semibold text-primary backdrop-blur-md transition-all hover:bg-primary/20 hover:border-primary shadow-lg"
+                  title="Customize Profile Avatar & Cover in Admin Dashboard"
+                >
+                  <Camera className="size-3.5" />
+                  <span>Edit Banner & Profile</span>
+                </Link>
+              )}
+              <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3.5 py-1.5 text-[11px] mono text-white/90 backdrop-blur-md shadow-lg">
+                <Sparkles className="size-3 text-cyan-400" />
+                <span>Engineering Publication</span>
+              </div>
             </div>
           </div>
 
           {/* Profile content */}
           <div className="relative px-6 pb-6 pt-0">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
-              <div className="relative inline-block">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 sm:-mt-20 mb-4">
+              <div className="group/avatar relative inline-block">
                 <img
-                  src={profile.photo}
-                  alt={profile.name}
-                  className="size-24 sm:size-28 rounded-2xl border-4 border-card object-cover shadow-2xl ring-2 ring-primary/30"
+                  src={profileConfig.avatar || profile.photo}
+                  alt={profileConfig.name || profile.name}
+                  className="size-24 sm:size-32 rounded-2xl border-4 border-card object-cover shadow-2xl ring-2 ring-primary/40 transition-transform duration-300 group-hover/avatar:scale-105"
                 />
                 <span
                   title="Available for Software Engineering Roles"
                   className="absolute bottom-1 right-1 size-4 rounded-full bg-emerald-500 border-2 border-card ring-2 ring-emerald-400/50 animate-pulse"
                 />
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/65 opacity-0 transition-opacity backdrop-blur-xs group-hover/avatar:opacity-100 text-white"
+                    title="Change Profile Picture in Admin"
+                  >
+                    <Camera className="size-5 text-cyan-300" />
+                    <span className="text-[10px] font-semibold mt-1">Change</span>
+                  </Link>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -384,28 +657,28 @@ function BlogPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                  {profile.name}
+                  {profileConfig.name || profile.name}
                 </h1>
                 <BadgeCheck className="size-5 text-primary fill-primary/20" />
               </div>
               <p className="text-xs sm:text-sm text-foreground/90 font-medium mt-0.5">
-                CSE @ BAIUST · Software Engineer &amp; Systems Builder · Tech Writer
+                {profileConfig.subRole || "CSE @ BAIUST · Software Engineer & Systems Builder · Tech Writer"}
               </p>
               <p className="text-xs text-muted-foreground mt-2 max-w-2xl leading-relaxed">
-                Writing deep-dives into Next.js 15, React Server Components, distributed architectures,
-                C++ algorithmic complexity, and real-world production engineering.
+                {profileConfig.bio ||
+                  "Writing deep-dives into Next.js 15, React Server Components, distributed architectures, C++ algorithmic complexity, and real-world production engineering."}
               </p>
 
               {/* Author Telemetry Badges */}
               <div className="mt-3.5 flex flex-wrap items-center gap-2">
                 <span className="mono rounded-lg border border-border/80 bg-secondary/60 px-2.5 py-1 text-[11px] font-semibold text-foreground/90">
-                  🎓 Computer Science @ BAIUST
+                  {profileConfig.educationTag || "🎓 Computer Science @ BAIUST"}
                 </span>
                 <span className="mono rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                  ⚡ Systems &amp; Full-Stack Architecture
+                  {profileConfig.architectureTag || "⚡ Systems & Full-Stack Architecture"}
                 </span>
                 <span className="mono rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400">
-                  ● Active Publications
+                  {profileConfig.activeTag || "● Active Publications"}
                 </span>
               </div>
             </div>
@@ -414,8 +687,8 @@ function BlogPage() {
             {isAdmin && (
               <div className="mt-6 flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-3.5 sm:p-4 backdrop-blur-md shadow-inner">
                 <img
-                  src={profile.photo}
-                  alt={profile.name}
+                  src={profileConfig.avatar || profile.photo}
+                  alt={profileConfig.name || profile.name}
                   className="size-10 rounded-full border border-primary/40 object-cover"
                 />
                 <Link
@@ -423,7 +696,7 @@ function BlogPage() {
                   className="flex-1 rounded-xl border border-primary/30 bg-background/90 px-4 py-2.5 text-left text-xs sm:text-sm text-foreground hover:border-primary transition-all shadow-sm"
                 >
                   <span className="font-semibold text-primary">Admin Active:</span> What are you
-                  building or learning today, Farhad? Click to publish a post...
+                  building or learning today, Farhad? Click to publish a post or customize your profile...
                 </Link>
               </div>
             )}
@@ -481,7 +754,62 @@ function BlogPage() {
           </div>
         </div>
 
-        {/* Articles Feed (LinkedIn Style Feed) */}
+        {/* Layout / Format View Switcher */}
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card/40 p-2 sm:p-2.5 backdrop-blur-md">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground pl-1">
+            <Layers className="size-4 text-primary" />
+            <span className="font-semibold text-foreground">Content Layout:</span>
+          </div>
+          <div className="inline-flex rounded-xl bg-secondary/60 p-1 border border-border/60">
+            <button
+              type="button"
+              onClick={() => setFeedView("split")}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                feedView === "split"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+              }`}
+            >
+              <Layers className="size-3.5" />
+              <span>Split View (Articles ⇄ Videos)</span>
+              <span className="rounded-full bg-black/20 px-1.5 py-0.2 text-[10px] font-bold">
+                {filteredBlogs.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFeedView("articles")}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                feedView === "articles"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+              }`}
+            >
+              <BookOpen className="size-3.5" />
+              <span>Articles Only</span>
+              <span className="rounded-full bg-black/20 px-1.5 py-0.2 text-[10px] font-bold">
+                {articlePosts.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFeedView("videos")}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                feedView === "videos"
+                  ? "bg-rose-500 text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+              }`}
+            >
+              <Video className="size-3.5" />
+              <span>Videos Only</span>
+              <span className="rounded-full bg-black/20 px-1.5 py-0.2 text-[10px] font-bold">
+                {videoPosts.length}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Articles & Videos Feed */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -504,208 +832,112 @@ function BlogPage() {
               Reset filters
             </button>
           </div>
-        ) : (
-          <div className="space-y-6">
-            {filteredBlogs.map((blog) => {
-              const totalReactions =
-                (blog.reactions?.like || 0) +
-                (blog.reactions?.love || 0) +
-                (blog.reactions?.insightful || 0) +
-                (blog.reactions?.celebrate || 0) || blog.likes || 0;
-              const commentsCount = blog.comments?.length || 0;
-
-              return (
-                <article
-                  key={blog.id}
-                  id={blog.slug}
-                  onClick={() => setSelectedBlog(blog)}
-                  className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 sm:p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/60 hover:bg-card/90 hover:shadow-[0_20px_45px_-10px_rgba(6,182,212,0.18)]"
-                >
-                  {/* Subtle top ambient indicator on hover */}
-                  <div className="absolute top-0 inset-x-8 h-[2px] bg-gradient-to-r from-transparent via-transparent to-transparent transition-all duration-300 group-hover:via-primary" />
-
-                  {/* Author Row */}
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <img
-                          src={blog.authorAvatar || profile.photo}
-                          alt={blog.authorName}
-                          className="size-10 rounded-full border border-primary/40 object-cover ring-2 ring-primary/20 transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {blog.authorName}
-                          </span>
-                          <span className="rounded-md bg-primary/15 border border-primary/30 px-1.5 py-0.2 text-[9px] font-semibold text-primary">
-                            Author
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>
-                            {new Date(blog.createdAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
-                          <span>•</span>
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="size-3 text-primary/70" />
-                            {blog.readTime}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {blog.videoUrl && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.2)] animate-pulse">
-                          <Play className="size-3 fill-rose-400" />
-                          Video Breakdown
-                        </span>
-                      )}
-                      <span className="rounded-full border border-border/70 bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground group-hover:border-primary/40 transition-colors">
-                        {blog.category}
-                      </span>
-                    </div>
+        ) : feedView === "split" ? (
+          /* Dual Column Split View: Articles (7 cols) & Videos (5 cols) */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: Articles & Architecture Notes */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid size-8 place-items-center rounded-xl bg-primary/15 border border-primary/30 text-primary shadow-xs">
+                    <BookOpen className="size-4" />
                   </div>
-
-                  {/* Title & Excerpt */}
-                  <div className="flex items-start justify-between gap-4">
-                    <h2 className="text-xl font-bold tracking-tight text-foreground transition-colors duration-200 group-hover:text-primary sm:text-2xl">
-                      {blog.title}
+                  <div>
+                    <h2 className="text-base font-bold text-foreground">
+                      Articles &amp; Architecture Notes
                     </h2>
-                    <span className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors shrink-0 pt-1">
-                      Read <ArrowUpRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      Technical writeups, design patterns &amp; production blueprints
+                    </p>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
-                    {blog.excerpt}
-                  </p>
+                </div>
+                <span className="rounded-full border border-border/80 bg-secondary/60 px-2.5 py-0.5 text-xs font-mono text-muted-foreground">
+                  {articlePosts.length} {articlePosts.length === 1 ? "article" : "articles"}
+                </span>
+              </div>
 
-                  {/* Video Player or Cover Image */}
-                  {blog.videoUrl ? (
-                    <div
-                      className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-black/90 shadow-lg"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <VideoPlayer url={blog.videoUrl} title={blog.title} />
-                    </div>
-                  ) : blog.coverImage ? (
-                    <div className="mt-4 overflow-hidden rounded-xl border border-border/50">
-                      <img
-                        src={blog.coverImage}
-                        alt={blog.title}
-                        loading="lazy"
-                        className="h-56 w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] sm:h-72"
-                      />
-                    </div>
-                  ) : null}
+              {articlePosts.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-8 text-center">
+                  <BookOpen className="mx-auto size-8 text-muted-foreground/40" />
+                  <p className="mt-2 text-xs text-muted-foreground">No written articles match this filter.</p>
+                </div>
+              ) : (
+                articlePosts.map((blog) => renderBlogCard(blog, false))
+              )}
+            </div>
 
-                  {/* Tags */}
-                  {blog.tags && blog.tags.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-1.5">
-                      {blog.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center gap-1 rounded-md border border-border/40 bg-secondary/70 px-2 py-0.5 text-xs text-muted-foreground transition-colors group-hover:border-primary/30"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Reaction counts counter */}
-                  <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground border-t border-border/30 pt-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className="inline-flex -space-x-1">
-                        <span className="grid size-4 place-items-center rounded-full bg-blue-500 text-[9px] text-white shadow-sm">
-                          👍
-                        </span>
-                        <span className="grid size-4 place-items-center rounded-full bg-rose-500 text-[9px] text-white shadow-sm">
-                          ❤️
-                        </span>
-                        <span className="grid size-4 place-items-center rounded-full bg-amber-500 text-[9px] text-white shadow-sm">
-                          💡
-                        </span>
-                      </span>
-                      <span className="font-medium">{totalReactions} reactions</span>
-                    </div>
-
-                    <span className="hover:underline hover:text-primary transition-colors">
-                      {commentsCount > 0 ? `${commentsCount} comments` : "Be the first to comment"}
-                    </span>
+            {/* Right Column: Video Walkthroughs & Demos */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid size-8 place-items-center rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 shadow-xs">
+                    <Video className="size-4" />
                   </div>
-
-                  {/* LinkedIn-Style Action Buttons Bar */}
-                  <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-2">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      {/* Like */}
-                      <button
-                        onClick={(e) => handleReaction(e, blog.id, "like")}
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-blue-400 transition-colors"
-                      >
-                        <ThumbsUp className="size-3.5" />
-                        <span>Like</span>
-                      </button>
-
-                      {/* Love */}
-                      <button
-                        onClick={(e) => handleReaction(e, blog.id, "love")}
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-rose-400 transition-colors"
-                      >
-                        <Heart className="size-3.5" />
-                        <span>Love</span>
-                      </button>
-
-                      {/* Insightful */}
-                      <button
-                        onClick={(e) => handleReaction(e, blog.id, "insightful")}
-                        className="hidden xs:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-amber-400 transition-colors"
-                      >
-                        <Lightbulb className="size-3.5" />
-                        <span>Insightful</span>
-                      </button>
-
-                      {/* Comment */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBlog(blog);
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                      >
-                        <MessageSquare className="size-3.5" />
-                        <span>Comment</span>
-                      </button>
-                    </div>
-
-                    {/* Share */}
-                    <button
-                      onClick={(e) => handleShare(e, blog)}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                    >
-                      {copiedId === blog.id ? (
-                        <>
-                          <Check className="size-3.5 text-emerald-400" />
-                          <span className="text-emerald-400">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Share2 className="size-3.5" />
-                          <span>Share</span>
-                        </>
-                      )}
-                    </button>
+                  <div>
+                    <h2 className="text-base font-bold text-foreground">
+                      Video Walkthroughs &amp; Demos
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      Code demonstrations and visual system breakdowns
+                    </p>
                   </div>
-                </article>
-              );
-            })}
+                </div>
+                <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-xs font-mono font-semibold text-rose-400">
+                  {videoPosts.length} {videoPosts.length === 1 ? "video" : "videos"}
+                </span>
+              </div>
+
+              {videoPosts.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-8 text-center">
+                  <Video className="mx-auto size-8 text-muted-foreground/40" />
+                  <p className="mt-2 text-xs text-muted-foreground">No video breakdowns match this filter.</p>
+                </div>
+              ) : (
+                videoPosts.map((blog) => renderBlogCard(blog, true))
+              )}
+            </div>
+          </div>
+        ) : feedView === "articles" ? (
+          /* Articles Only Feed */
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-border/60">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-5 text-primary" />
+                <h2 className="text-lg font-bold text-foreground">All Technical Articles</h2>
+              </div>
+              <span className="rounded-full border border-border/80 bg-secondary/60 px-2.5 py-0.5 text-xs font-mono text-muted-foreground">
+                {articlePosts.length} posts
+              </span>
+            </div>
+            {articlePosts.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-12 text-center">
+                <BookOpen className="mx-auto size-10 text-muted-foreground/40" />
+                <p className="mt-2 text-sm text-muted-foreground">No written articles match this filter.</p>
+              </div>
+            ) : (
+              articlePosts.map((blog) => renderBlogCard(blog, false))
+            )}
+          </div>
+        ) : (
+          /* Videos Only Feed */
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-border/60">
+              <div className="flex items-center gap-2">
+                <Video className="size-5 text-rose-400" />
+                <h2 className="text-lg font-bold text-foreground">All Video Breakdowns</h2>
+              </div>
+              <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-xs font-mono font-semibold text-rose-400">
+                {videoPosts.length} videos
+              </span>
+            </div>
+            {videoPosts.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-12 text-center">
+                <Video className="mx-auto size-10 text-muted-foreground/40" />
+                <p className="mt-2 text-sm text-muted-foreground">No video breakdowns match this filter.</p>
+              </div>
+            ) : (
+              videoPosts.map((blog) => renderBlogCard(blog, true))
+            )}
           </div>
         )}
 
@@ -741,7 +973,7 @@ function BlogPage() {
 
               <div className="mt-4 flex items-center gap-3 border-y border-border/50 py-3">
                 <img
-                  src={selectedBlog.authorAvatar || profile.photo}
+                  src={selectedBlog.authorAvatar || profileConfig.avatar || profile.photo}
                   alt={selectedBlog.authorName}
                   className="size-11 rounded-full border border-primary/30 object-cover ring-2 ring-primary/20"
                 />
@@ -961,13 +1193,13 @@ function BlogPage() {
 
               <div className="flex items-center gap-3 border-b border-border/50 pb-4 mb-4">
                 <img
-                  src={profile.photo}
-                  alt={profile.name}
+                  src={profileConfig.avatar || profile.photo}
+                  alt={profileConfig.name || profile.name}
                   className="size-12 rounded-full border border-primary/30 object-cover"
                 />
                 <div>
                   <h3 className="font-bold text-base text-foreground flex items-center gap-1">
-                    Message {profile.name}
+                    Message {profileConfig.name || profile.name}
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Direct message straight to Farhad's dashboard

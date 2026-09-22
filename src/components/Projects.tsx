@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ExternalLink,
   Search,
@@ -9,6 +9,8 @@ import {
   Info,
   CheckCircle2,
   AlertTriangle,
+  Code2,
+  Tv,
 } from "lucide-react";
 import { useDynamicProjects } from "@/hooks/usePortfolioData";
 import { Section, SectionHeading } from "./Section";
@@ -16,12 +18,29 @@ import { Reveal } from "./Reveal";
 import { TiltCard } from "./TiltCard";
 import { GithubIcon } from "./BrandIcons";
 import { type DynamicProject } from "@/lib/supabase";
+import { sound } from "@/lib/sound";
 
 export function Projects() {
   const { projects } = useDynamicProjects();
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activeProject, setActiveProject] = useState<DynamicProject | null>(null);
+  const [activeTab, setActiveTab] = useState<"overview" | "architecture" | "demo">("overview");
+  const [activeSkillFilter, setActiveSkillFilter] = useState<string | null>(null);
+
+  // Listen for cross-filtering from Skills or Terminal
+  useEffect(() => {
+    const handleFilterSkill = (e: Event) => {
+      const customEvent = e as CustomEvent<{ skill: string }>;
+      if (customEvent.detail?.skill) {
+        setActiveSkillFilter(customEvent.detail.skill);
+        setQuery(customEvent.detail.skill);
+        setSelectedCategory("All");
+      }
+    };
+    window.addEventListener("portfolio_filter_skill", handleFilterSkill);
+    return () => window.removeEventListener("portfolio_filter_skill", handleFilterSkill);
+  }, []);
 
   // Derive dynamic project categories
   const categories = useMemo(() => {
@@ -74,7 +93,10 @@ export function Projects() {
               return (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => {
+                    sound.click();
+                    setSelectedCategory(cat);
+                  }}
                   className={`mono inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all ${
                     isActive
                       ? "border border-primary/50 bg-primary/15 text-primary shadow-[0_0_15px_rgba(6,182,212,0.25)]"
@@ -106,7 +128,11 @@ export function Projects() {
             />
             {query && (
               <button
-                onClick={() => setQuery("")}
+                onClick={() => {
+                  sound.click();
+                  setQuery("");
+                  setActiveSkillFilter(null);
+                }}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="size-3.5" />
@@ -114,6 +140,29 @@ export function Projects() {
             )}
           </div>
         </div>
+
+        {/* Active Skill Filter Banner */}
+        {activeSkillFilter && (
+          <div className="flex items-center justify-between rounded-xl border border-primary/40 bg-primary/10 px-4 py-2 text-xs animate-in fade-in">
+            <div className="flex items-center gap-2 text-foreground font-medium">
+              <Sparkles className="size-3.5 text-primary" />
+              <span>
+                Filtered by skill: <strong className="text-primary font-bold">{activeSkillFilter}</strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                sound.click();
+                setActiveSkillFilter(null);
+                setQuery("");
+              }}
+              className="text-xs text-primary hover:underline font-semibold"
+            >
+              Clear filter ✕
+            </button>
+          </div>
+        )}
       </Reveal>
 
       {/* Projects Grid — ALL CARDS SAME SIZE */}
@@ -271,63 +320,154 @@ export function Projects() {
               {activeProject.title}
             </h2>
 
-            <img
-              src={activeProject.image}
-              alt={activeProject.title}
-              className="mt-4 aspect-video w-full rounded-2xl object-cover object-top border border-border/50"
-            />
-
-            <p className="mt-4 text-xs sm:text-sm leading-relaxed text-muted-foreground">
-              {activeProject.description}
-            </p>
-
-            {/* Key Features */}
-            {activeProject.features && activeProject.features.length > 0 && (
-              <div className="mt-6 space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Key Features
-                </h4>
-                <ul className="space-y-1.5 text-xs text-muted-foreground">
-                  {activeProject.features.map((feat, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="size-3.5 text-primary shrink-0 mt-0.5" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Challenges Solved */}
-            {activeProject.challenges && (
-              <div className="mt-5 rounded-xl border border-amber/30 bg-amber/5 p-4">
-                <h4 className="text-xs font-bold text-amber flex items-center gap-1.5">
-                  <AlertTriangle className="size-3.5" /> Architecture Challenges Solved
-                </h4>
-                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                  {activeProject.challenges}
-                </p>
-              </div>
-            )}
-
-            {/* Complete Stack */}
-            <div className="mt-6 border-t border-border/50 pt-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">
-                Technologies & Tools
-              </h4>
-              <div className="flex flex-wrap gap-1.5">
-                {(activeProject.stack || activeProject.tech).map((item) => (
-                  <span
-                    key={item}
-                    className="mono rounded-lg border border-border bg-secondary/60 px-2.5 py-1 text-[11px] text-foreground"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
+            {/* Modal Tabs */}
+            <div className="mt-4 flex items-center gap-1 border-b border-border/60 pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  sound.click();
+                  setActiveTab("overview");
+                }}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                  activeTab === "overview"
+                    ? "bg-primary/20 text-primary border border-primary/40 shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Overview & Features
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  sound.click();
+                  setActiveTab("architecture");
+                }}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                  activeTab === "architecture"
+                    ? "bg-primary/20 text-primary border border-primary/40 shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Architecture & Tech Specs
+              </button>
+              {activeProject.live && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.click();
+                    setActiveTab("demo");
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                    activeTab === "demo"
+                      ? "bg-primary/20 text-primary border border-primary/40 shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Live Walkthrough
+                </button>
+              )}
             </div>
 
-            {/* Modal Links */}
+            {/* Tab: Overview */}
+            {activeTab === "overview" && (
+              <div className="space-y-4 pt-4 animate-in fade-in">
+                <img
+                  src={activeProject.image}
+                  alt={activeProject.title}
+                  className="aspect-video w-full rounded-2xl object-cover object-top border border-border/50 shadow-md"
+                />
+
+                <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                  {activeProject.description}
+                </p>
+
+                {/* Key Features */}
+                {activeProject.features && activeProject.features.length > 0 && (
+                  <div className="space-y-2 pt-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                      Key Deliverables & Capabilities
+                    </h4>
+                    <ul className="space-y-1.5 text-xs text-muted-foreground">
+                      {activeProject.features.map((feat, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckCircle2 className="size-3.5 text-primary shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab: Architecture */}
+            {activeTab === "architecture" && (
+              <div className="space-y-4 pt-4 animate-in fade-in">
+                {/* Challenges Solved */}
+                {activeProject.challenges && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+                    <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <AlertTriangle className="size-3.5" /> Engineering Challenges & Solutions
+                    </h4>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                      {activeProject.challenges}
+                    </p>
+                  </div>
+                )}
+
+                {/* System Specs */}
+                <div className="rounded-xl border border-border/70 bg-secondary/30 p-4 space-y-2.5 text-xs">
+                  <h4 className="font-bold text-foreground flex items-center gap-1.5">
+                    <Code2 className="size-3.5 text-primary" /> Architectural Highlights
+                  </h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>• Decoupled modular components with strict TypeScript interface definitions</li>
+                    <li>• Low-latency client side rendering paired with optimized server data hydration</li>
+                    <li>• Production environment with defensive error boundaries and telemetry logging</li>
+                  </ul>
+                </div>
+
+                {/* Complete Stack */}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">
+                    Technologies & Dependencies
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(activeProject.stack || activeProject.tech).map((item) => (
+                      <span
+                        key={item}
+                        className="mono rounded-lg border border-border bg-secondary/60 px-2.5 py-1 text-[11px] text-foreground font-medium"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab: Demo */}
+            {activeTab === "demo" && (
+              <div className="space-y-4 pt-4 animate-in fade-in text-center">
+                <div className="rounded-2xl border border-border/80 bg-zinc-950 p-6 flex flex-col items-center justify-center min-h-[260px]">
+                  <Tv className="size-10 text-primary mb-3" />
+                  <h4 className="text-base font-bold text-foreground">Interactive Live Preview</h4>
+                  <p className="text-xs text-muted-foreground max-w-md mt-1 mb-4">
+                    Launch the live production deployment of <strong>{activeProject.title}</strong> directly in your browser with full responsive interface and interactions.
+                  </p>
+                  <a
+                    href={activeProject.live}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-lg hover:bg-primary/90 transition-all"
+                  >
+                    <ExternalLink className="size-4" /> Open Full Production App ↗
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Links Footer */}
             <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
               <div className="flex items-center gap-3">
                 {activeProject.live && (
@@ -337,7 +477,7 @@ export function Projects() {
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
                   >
-                    <ExternalLink className="size-3.5" /> Visit Live Project
+                    <ExternalLink className="size-3.5" /> Visit Live
                   </a>
                 )}
                 {activeProject.github && (

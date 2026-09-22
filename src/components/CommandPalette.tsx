@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, FileText, Home, Mail, Rss } from "lucide-react";
+import { Download, FileText, Home, Mail, Rss, Lock } from "lucide-react";
 import { navSections, profile } from "@/data/portfolio";
 import { GithubIcon, LinkedinIcon } from "./BrandIcons";
 import {
@@ -46,16 +46,28 @@ export function CommandPalette() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Open command palette"
-        className="glass mono fixed bottom-5 right-5 z-40 hidden items-center gap-2 rounded-full border border-border px-4 py-2.5 text-[11px] text-muted-foreground shadow-[var(--shadow-depth)] transition-colors hover:border-primary/40 hover:text-primary sm:flex"
-      >
-        Quick nav
-        <kbd className="mono rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[10px]">
-          ⌘K
-        </kbd>
-      </button>
+      <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Open command palette"
+          className="glass mono flex items-center gap-2 rounded-full border border-border px-3.5 py-2 text-[11px] text-muted-foreground shadow-[var(--shadow-depth)] transition-all hover:border-primary/40 hover:text-primary hover:scale-105"
+        >
+          <span>Quick nav</span>
+          <kbd className="mono rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[10px]">
+            ⌘K
+          </kbd>
+        </button>
+
+        <a
+          href="/admin"
+          aria-label="Admin CMS Login"
+          title="Admin CMS Login (/admin)"
+          className="glass mono flex size-8 items-center justify-center rounded-full border border-border text-muted-foreground shadow-[var(--shadow-depth)] transition-all hover:border-primary/40 hover:text-primary hover:scale-105"
+        >
+          <Lock className="size-3.5" />
+        </a>
+      </div>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Jump to a section, or open a link…" />
@@ -94,6 +106,34 @@ export function CommandPalette() {
               <span>Admin CMS Portal</span>
               <CommandShortcut>/admin</CommandShortcut>
             </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                setOpen(false);
+                window.dispatchEvent(new CustomEvent("open_message_modal"));
+              }}
+            >
+              <Mail />
+              <span>Send Direct Message (To Farhad's Dashboard)</span>
+              <CommandShortcut>Msg</CommandShortcut>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                setOpen(false);
+                window.dispatchEvent(new CustomEvent("open_resume_modal"));
+              }}
+            >
+              <FileText />
+              <span>Interactive Resume Preview (In-Site)</span>
+              <CommandShortcut>Resume</CommandShortcut>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                go("guestbook");
+              }}
+            >
+              <FileText />
+              <span>Community Guestbook & Endorsements</span>
+            </CommandItem>
             <CommandItem onSelect={() => openExternal(profile.github)}>
               <GithubIcon className="size-4" />
               <span>GitHub Profile</span>
@@ -101,13 +141,9 @@ export function CommandPalette() {
             </CommandItem>
             <CommandItem onSelect={() => openExternal(profile.linkedin)}>
               <LinkedinIcon className="size-4" />
-              <span>LinkedIn</span>
+              <span>LinkedIn Profile</span>
             </CommandItem>
             <CommandItem onSelect={() => openExternal(profile.resume)}>
-              <FileText />
-              <span>View Resume</span>
-            </CommandItem>
-            <CommandItem onSelect={() => openExternal(profile.resumeFile)}>
               <Download />
               <span>Download Resume (PDF)</span>
             </CommandItem>
