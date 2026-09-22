@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { profile } from "@/data/portfolio";
+import { getProfileConfig } from "@/lib/supabase";
 import { Section, SectionHeading } from "./Section";
 import { Reveal } from "./Reveal";
 import { TiltCard } from "./TiltCard";
@@ -98,6 +99,13 @@ const engineeringTenets = [
 
 export function About() {
   const [activeTab, setActiveTab] = useState<"tenets" | "telemetry" | "metrics">("tenets");
+  const [profileConfig, setProfileConfig] = useState(getProfileConfig);
+
+  useEffect(() => {
+    const handleUpdate = () => setProfileConfig(getProfileConfig());
+    window.addEventListener("portfolio_data_changed", handleUpdate);
+    return () => window.removeEventListener("portfolio_data_changed", handleUpdate);
+  }, []);
 
   return (
     <Section id="about">
@@ -132,8 +140,8 @@ export function About() {
               {/* Photo with holographic ring */}
               <div className="relative size-28 shrink-0 overflow-hidden rounded-2xl border-2 border-primary/40 p-1 shadow-lg shadow-primary/10 sm:size-32">
                 <img
-                  src={profile.photo}
-                  alt={profile.name}
+                  src={profileConfig.avatar || profile.photo}
+                  alt={profileConfig.name || profile.name}
                   className="size-full rounded-xl object-cover"
                   loading="lazy"
                   width={256}
@@ -148,18 +156,18 @@ export function About() {
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
-                    {profile.name}
+                    {profileConfig.name || profile.name}
                   </h3>
                   <span className="rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                     Software Engineer
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm font-medium text-primary/90">
-                  Computer Science &amp; Engineering · <span className="text-foreground">BAIUST</span>
+                  {profileConfig.subRole || "Computer Science & Engineering · BAIUST"}
                 </p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Architecting resilient web systems, scalable backend pipelines, and low-latency user
-                  interfaces backed by rigorous computer science fundamentals.
+                  {profileConfig.bio ||
+                    "Architecting resilient web systems, scalable backend pipelines, and low-latency user interfaces backed by rigorous computer science fundamentals."}
                 </p>
               </div>
             </div>

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { ArrowRight, Eye, Mail, MapPin, Terminal, ArrowUpRight, MessageSquare } from "lucide-react";
 import { motion } from "motion/react";
 import { profile, stats } from "@/data/portfolio";
@@ -6,12 +7,20 @@ import { Magnetic } from "./Magnetic";
 import { GithubIcon, LinkedinIcon } from "./BrandIcons";
 import { track } from "./analytics";
 import { sound } from "@/lib/sound";
+import { getProfileConfig } from "@/lib/supabase";
 
 function go(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
 export function Hero() {
+  const [profileConfig, setProfileConfig] = useState(getProfileConfig);
+
+  useEffect(() => {
+    const handleUpdate = () => setProfileConfig(getProfileConfig());
+    window.addEventListener("portfolio_data_changed", handleUpdate);
+    return () => window.removeEventListener("portfolio_data_changed", handleUpdate);
+  }, []);
   return (
     <section id="home" className="relative min-h-[100svh] overflow-hidden px-5 pb-16 pt-32">
       <div aria-hidden className="grid-bg absolute inset-0" />
@@ -146,8 +155,8 @@ export function Hero() {
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
               <div className="relative size-44 overflow-hidden rounded-full border-2 border-primary/40 shadow-[0_0_40px_rgba(139,92,246,0.35)] ring-4 ring-primary/20 sm:size-56">
                 <img
-                  src={profile.photo}
-                  alt={`Portrait of ${profile.name}`}
+                  src={profileConfig.avatar || profile.photo}
+                  alt={`Portrait of ${profileConfig.name || profile.name}`}
                   className="size-full object-cover object-top"
                   width={853}
                   height={1600}

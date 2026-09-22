@@ -3043,6 +3043,16 @@ function EducationManager() {
    ========================================================= */
 const COVER_PRESETS = [
   {
+    name: "VS Code & Dark Syntax",
+    url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1920&auto=format&fit=crop",
+    desc: "Clean Next.js / TypeScript code editor",
+  },
+  {
+    name: "Dual Monitor SWE Setup",
+    url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1920&auto=format&fit=crop",
+    desc: "Modern engineer workstation & code display",
+  },
+  {
     name: "Cyber Matrix & Deep Violet",
     url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop",
     desc: "Vibrant violet & cyan cyber mesh",
@@ -3053,89 +3063,171 @@ const COVER_PRESETS = [
     desc: "Glowing hardware traces & architecture",
   },
   {
-    name: "Minimalist Developer Space",
+    name: "Terminal & Shell CLI",
+    url: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?q=80&w=1920&auto=format&fit=crop",
+    desc: "Dark developer command-line interface",
+  },
+  {
+    name: "Cloud Server Infrastructure",
+    url: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1920&auto=format&fit=crop",
+    desc: "High-density cloud server racks & datacenter",
+  },
+  {
+    name: "Silicone Chip & Architecture",
+    url: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1920&auto=format&fit=crop",
+    desc: "Integrated circuit architecture & die",
+  },
+  {
+    name: "Minimalist SWE Workstation",
     url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1920&auto=format&fit=crop",
     desc: "Sleek retro-futuristic dark work desk",
   },
   {
-    name: "Terminal & Code Streams",
-    url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1920&auto=format&fit=crop",
-    desc: "High-contrast developer terminal lines",
+    name: "Full-Stack Code Lines",
+    url: "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1920&auto=format&fit=crop",
+    desc: "Highlighted source code architecture",
   },
   {
-    name: "Deep Space Quantum Flow",
-    url: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1920&auto=format&fit=crop",
-    desc: "Cosmic waves and radiant purple glow",
+    name: "Cyber Systems Data Grid",
+    url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1920&auto=format&fit=crop",
+    desc: "Futuristic digital grid & telemetry",
   },
 ];
 
+// Client-side image resizer/compressor to safely store in localStorage without exceeding quotas
+function compressImage(file: File, maxWidth: number, maxHeight: number, quality = 0.85): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => resolve(e.target?.result as string);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(file);
+  });
+}
+
 function ProfileManager() {
-  const initial = getProfileConfig();
-  const [avatar, setAvatar] = useState(initial.avatar || profile.photo);
-  const [coverImage, setCoverImage] = useState(initial.coverImage);
-  const [name, setName] = useState(initial.name || profile.name);
-  const [subRole, setSubRole] = useState(initial.subRole || "");
-  const [bio, setBio] = useState(initial.bio || "");
-  const [educationTag, setEducationTag] = useState(initial.educationTag || "");
-  const [architectureTag, setArchitectureTag] = useState(initial.architectureTag || "");
-  const [activeTag, setActiveTag] = useState(initial.activeTag || "");
+  const [profileConfig, setConfig] = useState(getProfileConfig);
+  const [avatar, setAvatar] = useState(() => getProfileConfig().avatar || profile.photo);
+  const [coverImage, setCoverImage] = useState(() => getProfileConfig().coverImage);
+  const [name, setName] = useState(() => getProfileConfig().name || profile.name);
+  const [subRole, setSubRole] = useState(() => getProfileConfig().subRole || "");
+  const [bio, setBio] = useState(() => getProfileConfig().bio || "");
+  const [educationTag, setEducationTag] = useState(() => getProfileConfig().educationTag || "");
+  const [architectureTag, setArchitectureTag] = useState(() => getProfileConfig().architectureTag || "");
+  const [activeTag, setActiveTag] = useState(() => getProfileConfig().activeTag || "");
   const [avatarUploadName, setAvatarUploadName] = useState("");
   const [coverUploadName, setCoverUploadName] = useState("");
+  const [isProcessingImg, setIsProcessingImg] = useState(false);
 
-  const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Sync state if another tab or component updates profile config
+  useEffect(() => {
+    const sync = () => {
+      const fresh = getProfileConfig();
+      setConfig(fresh);
+      setAvatar(fresh.avatar || profile.photo);
+      setCoverImage(fresh.coverImage);
+      setName(fresh.name || profile.name);
+      setSubRole(fresh.subRole || "");
+      setBio(fresh.bio || "");
+      setEducationTag(fresh.educationTag || "");
+      setArchitectureTag(fresh.architectureTag || "");
+      setActiveTag(fresh.activeTag || "");
+    };
+    window.addEventListener("portfolio_data_changed", sync);
+    return () => window.removeEventListener("portfolio_data_changed", sync);
+  }, []);
+
+  const handleAvatarFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Avatar image file size exceeds 10MB limit.");
-      return;
+    setIsProcessingImg(true);
+    try {
+      setAvatarUploadName(file.name);
+      // Automatically compress avatar to 400x400 JPEG (~30KB)
+      const compressed = await compressImage(file, 400, 400, 0.88);
+      setAvatar(compressed);
+      toast.success(`Photo "${file.name}" optimized & loaded as avatar!`);
+    } catch {
+      toast.error("Failed to process photo.");
+    } finally {
+      setIsProcessingImg(false);
     }
-    setAvatarUploadName(file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setAvatar(event.target.result as string);
-        toast.success(`Photo "${file.name}" loaded as avatar!`);
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
-  const handleCoverFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("Cover banner image file size exceeds 15MB limit.");
-      return;
+    setIsProcessingImg(true);
+    try {
+      setCoverUploadName(file.name);
+      // Automatically compress cover banner to 1440x700 JPEG (~85KB)
+      const compressed = await compressImage(file, 1440, 700, 0.84);
+      setCoverImage(compressed);
+      toast.success(`Cover banner "${file.name}" optimized & loaded!`);
+    } catch {
+      toast.error("Failed to process cover banner.");
+    } finally {
+      setIsProcessingImg(false);
     }
-    setCoverUploadName(file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setCoverImage(event.target.result as string);
-        toast.success(`Cover banner "${file.name}" loaded!`);
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSave = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    saveProfileConfig({
-      avatar,
-      coverImage,
-      name,
-      subRole,
-      bio,
-      educationTag,
-      architectureTag,
-      activeTag,
-    });
-    toast.success("Profile avatar, cover banner, and bio updated successfully!");
+    try {
+      const saved = saveProfileConfig({
+        avatar,
+        coverImage,
+        name,
+        subRole,
+        bio,
+        educationTag,
+        architectureTag,
+        activeTag,
+      });
+      setConfig(saved);
+      setAvatar(saved.avatar);
+      setCoverImage(saved.coverImage);
+      setName(saved.name);
+      setSubRole(saved.subRole);
+      setBio(saved.bio);
+      setEducationTag(saved.educationTag);
+      setArchitectureTag(saved.architectureTag);
+      setActiveTag(saved.activeTag);
+      toast.success("Profile & Cover settings saved successfully! All pages are now updated.");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to save: " + (err?.message || "Storage error"));
+    }
   };
 
   const handleReset = () => {
     if (confirm("Reset profile branding and cover banner back to original defaults?")) {
       const def = resetProfileConfig();
+      setConfig(def);
       setAvatar(def.avatar);
       setCoverImage(def.coverImage);
       setName(def.name);

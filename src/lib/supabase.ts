@@ -310,13 +310,19 @@ export const triggerDataUpdate = () => {
   }
 };
 
+// In-memory cache fallback in case of storage quota restrictions
+let memoryProfileCache: UserProfileConfig | null = null;
+
 // Profile & Cover Customization Management
 export const getProfileConfig = (): UserProfileConfig => {
   if (typeof window === "undefined") return DEFAULT_PROFILE_CONFIG;
+  if (memoryProfileCache) return memoryProfileCache;
   const raw = localStorage.getItem(STORAGE_KEYS.PROFILE_CONFIG);
   if (raw) {
     try {
-      return { ...DEFAULT_PROFILE_CONFIG, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      memoryProfileCache = { ...DEFAULT_PROFILE_CONFIG, ...parsed };
+      return memoryProfileCache;
     } catch (e) {
       console.error("Failed to parse profile config:", e);
     }
@@ -328,7 +334,12 @@ export const saveProfileConfig = (config: Partial<UserProfileConfig>): UserProfi
   if (typeof window !== "undefined") {
     const current = getProfileConfig();
     const merged: UserProfileConfig = { ...current, ...config };
-    localStorage.setItem(STORAGE_KEYS.PROFILE_CONFIG, JSON.stringify(merged));
+    memoryProfileCache = merged;
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROFILE_CONFIG, JSON.stringify(merged));
+    } catch (err) {
+      console.warn("Storage quota warning when saving profile config:", err);
+    }
     triggerDataUpdate();
     return merged;
   }
@@ -336,6 +347,7 @@ export const saveProfileConfig = (config: Partial<UserProfileConfig>): UserProfi
 };
 
 export const resetProfileConfig = (): UserProfileConfig => {
+  memoryProfileCache = DEFAULT_PROFILE_CONFIG;
   if (typeof window !== "undefined") {
     localStorage.removeItem(STORAGE_KEYS.PROFILE_CONFIG);
     triggerDataUpdate();
