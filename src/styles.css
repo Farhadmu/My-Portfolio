@@ -59,6 +59,12 @@
   --font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
   --font-hand: "Caveat", cursive, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-bengali: "Hind Siliguri", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root[lang="bn"],
+.lang-bn {
+  font-family: var(--font-bengali);
 }
 
 :root {

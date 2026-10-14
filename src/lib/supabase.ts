@@ -224,12 +224,70 @@ export interface AchievementSettings {
   soundEnabled?: boolean;
 }
 
+export interface NowBuildingItem {
+  id: string;
+  title: string;
+  note: string;
+  status?: "active" | "shipping" | "polishing";
+}
+
+export interface NowLearningItem {
+  id: string;
+  title: string;
+  note: string;
+  tag?: string;
+}
+
+export interface NowReadingItem {
+  id: string;
+  title: string;
+  author: string;
+  note: string;
+}
+
+export interface NowData {
+  building: NowBuildingItem[];
+  learning: NowLearningItem[];
+  reading: NowReadingItem[];
+  currentFocus: string;
+  location: string;
+  listeningTo?: string;
+  updatedAt: string;
+}
+
+export interface CaseStudyMetric {
+  label: string;
+  value: string;
+  detail: string;
+}
+
+export interface CaseStudy {
+  slug: string;
+  title: string;
+  clientOrContext: string;
+  role: string;
+  timeline: string;
+  overview: string;
+  problem: string;
+  process: string;
+  wireframeImage?: string;
+  beforeImage: string;
+  afterImage: string;
+  result: string;
+  metrics: CaseStudyMetric[];
+  stack: string[];
+  liveUrl?: string;
+  githubUrl?: string;
+}
+
 export const DEFAULT_HOME_SECTIONS_CONFIG: HomeSectionsConfig = {
   sections: [
     { id: "hero", label: "Hero Banner", navLabel: "Home", enabled: true, bgStyle: "bg-paper" },
     { id: "about", label: "About Me", navLabel: "About", title: "Who's Behind the Systems?", desc: "Software Engineer specializing in scalable full-stack architectures, low-latency interfaces, and algorithmic problem solving.", eyebrow: "ABOUT ME & PHILOSOPHY", enabled: true, bgStyle: "bg-graph" },
     { id: "skills", label: "Skills & Tech", navLabel: "Skills", title: "Technical Stack & Craft", desc: "Core languages, frameworks, databases and system utilities I deploy in production.", eyebrow: "SKILLS & ARSENAL", enabled: true, bgStyle: "bg-ruled" },
     { id: "projects", label: "Projects", navLabel: "Projects", title: "Shipped Software & Applications", desc: "Real-world web apps, market solutions and full-stack platforms with live deployments.", eyebrow: "FEATURED WORK", enabled: true, bgStyle: "bg-dots" },
+    { id: "achievements", label: "Pin Board & Stickers", navLabel: "Pin Board", title: "Pin Board & Accolades", desc: "Hackathons, competitive coding, medals & verified certifications — pinned to my desk.", eyebrow: "HONORS & STICKERS", enabled: true, bgStyle: "bg-paper" },
+    { id: "now", label: "What I'm Doing Now", navLabel: "Now", title: "What I'm Doing Now", desc: "A public memo of what has my focus right now — building, learning & reading.", eyebrow: "DISPATCHES / NOW", enabled: true, bgStyle: "bg-sticky" },
     { id: "education", label: "Education", navLabel: "Education", title: "Academic & Professional Foundations", desc: "University degree, intensive technical bootcamps, and foundational milestones.", eyebrow: "EDUCATION & TRAINING", enabled: true, bgStyle: "bg-sticky" },
     { id: "experience", label: "Experience & Hackathons", navLabel: "Experience", title: "Hackathons, Internships & Milestones", desc: "High-pressure competitive hackathons and hands-on front-end AI engineering experience.", eyebrow: "TRACK RECORD", enabled: true, bgStyle: "bg-blueprint" },
     { id: "credibility", label: "Credibility & Proof", navLabel: "Credibility", title: "Verified Credentials & Recommendations", desc: "Case study breakdown, mentor recommendations and verified honors.", eyebrow: "PROOF OF WORK", enabled: true, bgStyle: "bg-paper" },
@@ -504,7 +562,149 @@ const STORAGE_KEYS = {
   HOME_SECTIONS: "farhad_portfolio_home_sections",
   ACHIEVEMENTS: "farhad_portfolio_achievements",
   ACHIEVEMENT_SETTINGS: "farhad_portfolio_achievement_settings",
+  NOW_DATA: "farhad_portfolio_now_data",
+  CASE_STUDIES: "farhad_portfolio_case_studies",
 };
+
+export const DEFAULT_NOW_DATA: NowData = {
+  building: [
+    {
+      id: "b-1",
+      title: "Handcrafted Portfolio v2 (Workshop Edition)",
+      note: "Migrated to TanStack Start, React 19, and notebook raw craft with zero AI generic glow.",
+      status: "polishing",
+    },
+    {
+      id: "b-2",
+      title: "FixItNow Community Issue & Repair Platform",
+      note: "Engineering scalable grievance reporting with real-time geolocation and civic status updates.",
+      status: "active",
+    },
+    {
+      id: "b-3",
+      title: "Competitive Programming Drill in C++",
+      note: "Solving 3-5 graph, number theory, and dynamic programming problems daily on Codeforces & LeetCode.",
+      status: "active",
+    },
+  ],
+  learning: [
+    {
+      id: "l-1",
+      title: "Distributed Systems & Consensus",
+      note: "Studying Raft consensus, leader election, and partition tolerance in distributed databases.",
+      tag: "Systems",
+    },
+    {
+      id: "l-2",
+      title: "Next.js 15 & TanStack Start Server Functions",
+      note: "Deep diving into fine-grained server component streaming and zero-waterfall data fetching.",
+      tag: "Web Architecture",
+    },
+    {
+      id: "l-3",
+      title: "Linux Kernel Internals & IPC",
+      note: "Exploring POSIX shared memory, unix domain sockets, and system call tracing on Garuda Linux.",
+      tag: "Core Engineering",
+    },
+  ],
+  reading: [
+    {
+      id: "r-1",
+      title: "Designing Data-Intensive Applications",
+      author: "Martin Kleppmann",
+      note: "Currently in Part II: Distributed Data — Replication, Partitioning & Transaction Isolation.",
+    },
+    {
+      id: "r-2",
+      title: "System Design Interview (Vol. 2)",
+      author: "Alex Xu",
+      note: "Analyzing real-world distributed architectures: Google Maps, S3 object storage & payment ledgers.",
+    },
+  ],
+  currentFocus: "Refining systems architecture, competitive programming speed, and building accessible web software.",
+  location: "Comilla, Bangladesh (BAIUST Campus)",
+  listeningTo: "Khruangbin & Lo-fi Chillhop Coding Sessions",
+  updatedAt: "2026-10-12T10:00:00.000Z",
+};
+
+export const DEFAULT_CASE_STUDIES: CaseStudy[] = [
+  {
+    slug: "keenkeeper",
+    title: "KeenKeeper — Personal Finance & Asset Architecture",
+    clientOrContext: "Independent Fintech Product",
+    role: "Full-Stack Engineer & Product Architect",
+    timeline: "3 Months (Q1 2026)",
+    overview: "A high-performance personal ledger and asset tracking platform built with offline-first client encryption, optimistic mutation updates, and zero cloud leaks.",
+    problem: `Traditional personal finance applications suffer from three critical bottlenecks:
+1. Sluggish Latency: Heavy server-rendered roundtrips causing 400ms+ delay on simple expense entries.
+2. Privacy Vulnerability: Centralized plain-text banking credentials prone to data scraping.
+3. Offline Failure: Inability to record quick transactions when subway or cell signals drop.`,
+    process: `We re-architected KeenKeeper from the ground up:
+- Local-First Storage Engine: IndexedDB cache with TanStack Query optimistic mutations.
+- Client-Side AES Encryption: All transactions encrypted locally with zero knowledge proof before cloud replication.
+- Responsive UI Hierarchy: High-density numeric keyboards, instant currency conversions, and SVG financial trajectory charts.`,
+    wireframeImage: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?q=80&w=1200&auto=format&fit=crop",
+    beforeImage: "/assets/keenkeeper.png",
+    afterImage: "/assets/keenkeeper.png",
+    result: `Shipped to production with exceptional performance benchmarks:
+- Sub-40ms optimistic UI feedback on all income/expense entries.
+- 99/100 Lighthouse performance rating on both mobile and desktop.
+- 100% offline data integrity with automatic conflict resolution upon reconnection.`,
+    metrics: [
+      { label: "Performance", value: "99/100", detail: "Google Lighthouse Audit" },
+      { label: "Local Latency", value: "<35ms", detail: "Optimistic updates" },
+      { label: "Data Security", value: "E2E", detail: "Client-side AES encryption" },
+      { label: "Active Transactions", value: "12,000+", detail: "Tracked securely" },
+    ],
+    stack: ["React", "TypeScript", "Tailwind CSS", "IndexedDB", "Supabase", "Framer Motion"],
+    liveUrl: "https://keenkeeper.vercel.app",
+    githubUrl: "https://github.com/Farhadmu/keenkeeper",
+  },
+  {
+    slug: "jobtracker",
+    title: "JobTracker — Engineering Application Funnel",
+    clientOrContext: "Open Source Career Tool",
+    role: "Lead Frontend Developer",
+    timeline: "2 Months",
+    overview: "A Kanban-driven developer pipeline designed to organize hundreds of tech job applications, interview stages, salary offers, and technical assessments without messy spreadsheets.",
+    problem: "Software engineers applying to dozens of companies routinely miss interview deadlines, lose track of recruiter email threads, and have no visibility into conversion funnel conversion metrics across referral vs direct applications.",
+    process: "1. Implemented fluid Drag-and-Drop column transitions with Framer Motion.\n2. Integrated full-text fuzzy search across company names, tech stacks, and interview stages.\n3. Built an analytics dashboard computing conversion rates at each interview round.",
+    wireframeImage: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=1200&auto=format&fit=crop",
+    beforeImage: "/assets/jobtracker.png",
+    afterImage: "/assets/jobtracker.png",
+    result: "Eliminated spreadsheet clutter for hundreds of job seekers, reducing time spent tracking applications by over 60%.",
+    metrics: [
+      { label: "Search Latency", value: "<15ms", detail: "Client fuzzy indexing" },
+      { label: "Lighthouse", value: "98/100", detail: "Production build" },
+      { label: "Funnel Analytics", value: "100%", detail: "Stage conversion rates" },
+    ],
+    stack: ["Next.js", "React 19", "Tailwind CSS", "Radix UI", "Zustand"],
+    liveUrl: "https://jobtracker.vercel.app",
+    githubUrl: "https://github.com/Farhadmu/jobtracker",
+  },
+  {
+    slug: "digitools",
+    title: "Digitools — Zero-Latency Developer Toolbox",
+    clientOrContext: "Developer Tooling Project",
+    role: "Systems & Web Developer",
+    timeline: "1.5 Months",
+    overview: "A privacy-preserving browser utility suite for format conversions, JSON/YAML/Base64 transformations, and cryptographic hashing running 100% in Web Workers with zero server payloads.",
+    problem: "Public formatters and converters on the web are notoriously sluggish, infested with malicious tracker ads, and pose security leaks by sending private API keys or payloads to untrusted third-party servers.",
+    process: "Constructed an in-memory client processing pipeline where transformations execute in dedicated background Web Workers. Zero telemetry, zero server round-trips.",
+    wireframeImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop",
+    beforeImage: "/assets/digitools.png",
+    afterImage: "/assets/digitools.png",
+    result: "Over 20+ utilities executing under 5ms without exposing user code to external servers.",
+    metrics: [
+      { label: "Server Payload", value: "0 bytes", detail: "100% Client-side" },
+      { label: "Execution Speed", value: "<5ms", detail: "Web Worker processing" },
+      { label: "Offline Ready", value: "PWA", detail: "Service Worker cache" },
+    ],
+    stack: ["TypeScript", "Web Workers", "Tailwind CSS", "Vite", "PWA"],
+    liveUrl: "https://digitools.vercel.app",
+    githubUrl: "https://github.com/Farhadmu/digitools",
+  },
+];
 
 // Dispatch helper to trigger reactivity across all subscribed components
 export const triggerDataUpdate = () => {
@@ -1571,6 +1771,89 @@ export const saveAchievementSettings = (settings: AchievementSettings): Achievem
 };
 
 // ==========================================
+// 12. NOW PAGE API
+// ==========================================
+let memoryNowCache: NowData | null = null;
+
+export const getNowData = async (): Promise<NowData> => {
+  if (typeof window === "undefined") return DEFAULT_NOW_DATA;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.NOW_DATA);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        memoryNowCache = parsed;
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load now data:", e);
+  }
+  localStorage.setItem(STORAGE_KEYS.NOW_DATA, JSON.stringify(DEFAULT_NOW_DATA));
+  memoryNowCache = DEFAULT_NOW_DATA;
+  return DEFAULT_NOW_DATA;
+};
+
+export const saveNowData = async (data: NowData): Promise<NowData> => {
+  if (typeof window !== "undefined") {
+    memoryNowCache = data;
+    localStorage.setItem(STORAGE_KEYS.NOW_DATA, JSON.stringify(data));
+    triggerDataUpdate();
+  }
+  return data;
+};
+
+// ==========================================
+// 13. CASE STUDIES API
+// ==========================================
+let memoryCaseStudiesCache: CaseStudy[] | null = null;
+
+export const getCaseStudies = async (): Promise<CaseStudy[]> => {
+  if (typeof window === "undefined") return DEFAULT_CASE_STUDIES;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CASE_STUDIES);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryCaseStudiesCache = parsed;
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load case studies:", e);
+  }
+  localStorage.setItem(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(DEFAULT_CASE_STUDIES));
+  memoryCaseStudiesCache = DEFAULT_CASE_STUDIES;
+  return DEFAULT_CASE_STUDIES;
+};
+
+export const getCaseStudyBySlug = async (slug: string): Promise<CaseStudy | null> => {
+  const all = await getCaseStudies();
+  return all.find((c) => c.slug === slug) || null;
+};
+
+export const saveCaseStudy = async (study: CaseStudy): Promise<CaseStudy[]> => {
+  const all = await getCaseStudies();
+  const exists = all.some((c) => c.slug === study.slug);
+  const updated = exists ? all.map((c) => (c.slug === study.slug ? study : c)) : [...all, study];
+  if (typeof window !== "undefined") {
+    memoryCaseStudiesCache = updated;
+    localStorage.setItem(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(updated));
+    triggerDataUpdate();
+  }
+  return updated;
+};
+
+export const saveCaseStudies = async (studies: CaseStudy[]): Promise<CaseStudy[]> => {
+  if (typeof window !== "undefined") {
+    memoryCaseStudiesCache = studies;
+    localStorage.setItem(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(studies));
+    triggerDataUpdate();
+  }
+  return studies;
+};
+
+// ==========================================
 // RESET ALL TO DEFAULTS
 // ==========================================
 export const resetPortfolioData = () => {
@@ -1589,10 +1872,14 @@ export const resetPortfolioData = () => {
     localStorage.removeItem(STORAGE_KEYS.HOME_SECTIONS);
     localStorage.removeItem(STORAGE_KEYS.ACHIEVEMENTS);
     localStorage.removeItem(STORAGE_KEYS.ACHIEVEMENT_SETTINGS);
+    localStorage.removeItem(STORAGE_KEYS.NOW_DATA);
+    localStorage.removeItem(STORAGE_KEYS.CASE_STUDIES);
     localStorage.removeItem(GUESTBOOK_STORAGE_KEY);
     memoryHomeSectionsCache = null;
     memoryAchievementsCache = null;
     memoryAchievementSettingsCache = null;
+    memoryNowCache = null;
+    memoryCaseStudiesCache = null;
     triggerDataUpdate();
   }
 };

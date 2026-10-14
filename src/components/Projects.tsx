@@ -278,12 +278,22 @@ export function Projects() {
                         )}
                       </div>
 
-                      <button
-                        onClick={() => setActiveProject(p)}
-                        className="mono inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <Info className="size-3.5" /> Details
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`/work/${(p.slug || p.title).toLowerCase().replace(/[^a-z0-9]/g, "")}`}
+                          className="mono inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                          title="Read full engineering case study"
+                        >
+                          Case Study ➔
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => setActiveProject(p)}
+                          className="mono inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <Info className="size-3.5" /> Details
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </article>

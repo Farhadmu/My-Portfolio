@@ -45,6 +45,7 @@ import {
   EyeOff,
   CheckSquare,
   Palette,
+  Clock,
 } from "lucide-react";
 import { profile } from "@/data/portfolio";
 import {
@@ -115,6 +116,8 @@ import {
 import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { CaseStudiesManager } from "@/components/admin/CaseStudiesManager";
+import { NowManager } from "@/components/admin/NowManager";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -129,6 +132,8 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState<
     | "sections"
     | "achievements"
+    | "case-studies"
+    | "now"
     | "blogs"
     | "profile"
     | "messages"
@@ -280,6 +285,8 @@ function AdminPage() {
           {[
             { id: "sections", label: "Home Sections", icon: Layers },
             { id: "achievements", label: "Achievement Popups", icon: Trophy },
+            { id: "case-studies", label: "Case Studies (/work)", icon: Sparkles },
+            { id: "now", label: "Now Page (/now)", icon: Clock },
             { id: "blogs", label: "Blogs (Feed)", icon: BookOpen },
             { id: "profile", label: "Profile & Cover (Blog)", icon: Camera },
             {
@@ -316,6 +323,8 @@ function AdminPage() {
         {/* TAB CONTENTS */}
         {activeTab === "sections" && <HomeSectionsManager />}
         {activeTab === "achievements" && <AchievementPopupsManager />}
+        {activeTab === "case-studies" && <CaseStudiesManager />}
+        {activeTab === "now" && <NowManager />}
         {activeTab === "blogs" && <BlogsManager />}
         {activeTab === "profile" && <ProfileManager />}
         {activeTab === "messages" && <MessagesManager />}

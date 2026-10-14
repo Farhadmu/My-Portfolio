@@ -6,6 +6,7 @@ import { track } from "./analytics";
 import { sound } from "@/lib/sound";
 import { useHomeSectionsConfig } from "@/hooks/usePortfolioData";
 import { HeroPortrait } from "./HeroPortrait";
+import { useI18n } from "@/lib/i18n";
 
 function go(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -13,6 +14,7 @@ function go(id: string) {
 
 export function Hero() {
   const homeSections = useHomeSectionsConfig();
+  const { t, isBn } = useI18n();
   const heroData = homeSections.hero || {
     name: profile.name,
     tagline: profile.tagline,
@@ -90,7 +92,7 @@ export function Hero() {
                 }}
                 className="group inline-flex items-center gap-2 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#0f172a]"
               >
-                <span>View Projects</span>
+                <span>{t.hero.viewProjects}</span>
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </button>
             </Magnetic>
@@ -104,7 +106,7 @@ export function Hero() {
                 className="group inline-flex items-center gap-2 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-card px-5 py-3 text-sm font-bold text-foreground shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5"
               >
                 <Eye className="size-4 text-primary" />
-                <span>View Resume</span>
+                <span>{t.hero.viewResume}</span>
                 <ArrowUpRight className="size-3.5 opacity-70" />
               </a>
             </Magnetic>
@@ -119,7 +121,7 @@ export function Hero() {
                 className="group inline-flex items-center gap-2 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-[#fef08a] dark:bg-amber-300 px-5 py-3 text-sm font-bold text-slate-900 shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5"
               >
                 <MessageSquare className="size-4 text-slate-900" />
-                <span>Message Farhad</span>
+                <span>{t.hero.messageMe}</span>
               </button>
             </Magnetic>
           </div>

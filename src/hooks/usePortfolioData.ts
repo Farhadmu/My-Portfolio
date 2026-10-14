@@ -20,10 +20,16 @@ import {
   type HomeSectionsConfig,
   type AchievementItem,
   type AchievementSettings,
+  type NowData,
+  type CaseStudy,
   DEFAULT_PROFILE_CONFIG,
   DEFAULT_HOME_SECTIONS_CONFIG,
   DEFAULT_ACHIEVEMENTS,
   DEFAULT_ACHIEVEMENT_SETTINGS,
+  DEFAULT_NOW_DATA,
+  DEFAULT_CASE_STUDIES,
+  getNowData,
+  getCaseStudies,
 } from "@/lib/supabase";
 import {
   projects as defaultProjects,
@@ -308,4 +314,55 @@ export function useAchievementSettings(): AchievementSettings {
 
   return settings;
 }
+
+export function useNowData() {
+  const [data, setData] = useState<NowData>(DEFAULT_NOW_DATA);
+  const [loading, setLoading] = useState(true);
+
+  const reload = useCallback(() => {
+    getNowData().then((res) => {
+      setData(res);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    reload();
+    const handleUpdate = () => reload();
+    window.addEventListener("portfolio_data_changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("portfolio_data_changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [reload]);
+
+  return { nowData: data, loading, reload };
+}
+
+export function useCaseStudies() {
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>(DEFAULT_CASE_STUDIES);
+  const [loading, setLoading] = useState(true);
+
+  const reload = useCallback(() => {
+    getCaseStudies().then((res) => {
+      setCaseStudies(res);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    reload();
+    const handleUpdate = () => reload();
+    window.addEventListener("portfolio_data_changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("portfolio_data_changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [reload]);
+
+  return { caseStudies, loading, reload };
+}
+
 

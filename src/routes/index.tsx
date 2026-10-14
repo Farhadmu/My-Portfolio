@@ -22,6 +22,8 @@ import { ResumeModal } from "@/components/ResumeModal";
 import { MessageModal } from "@/components/MessageModal";
 import { AskFarhadAI } from "@/components/AskFarhadAI";
 import { AchievementPopup } from "@/components/AchievementPopup";
+import { Corkboard } from "@/components/Corkboard";
+import { NowSection } from "@/components/NowSection";
 import { useHomeSectionsConfig } from "@/hooks/usePortfolioData";
 
 const title = "Md. Farhadul Islam — Software Engineer & Builder";
@@ -71,6 +73,8 @@ function Index() {
     about: <About />,
     skills: <Skills />,
     projects: <Projects />,
+    achievements: <Corkboard />,
+    now: <NowSection />,
     education: <Education />,
     experience: <Experience />,
     credibility: <Credibility />,

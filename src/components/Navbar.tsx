@@ -1,18 +1,26 @@
 import { useEffect, useState } from "react";
-import { Menu, X, Volume2, VolumeX, FileText, Sun, Moon } from "lucide-react";
+import { Menu, X, Volume2, VolumeX, FileText, Sun, Moon, Languages } from "lucide-react";
 import { navSections, profile } from "@/data/portfolio";
 import { Magnetic } from "./Magnetic";
 import { isSoundEnabled, setSoundEnabled, sound } from "@/lib/sound";
 import { useHomeSectionsConfig, useProfileConfig } from "@/hooks/usePortfolioData";
+import { useI18n } from "@/lib/i18n";
+import { EasterEggDoodleModal } from "./EasterEggDoodleModal";
 
 export function Navbar() {
   const profileConfig = useProfileConfig();
   const homeSections = useHomeSectionsConfig();
+  const { lang, setLanguage, t, isBn } = useI18n();
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("home");
   const [open, setOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
   const [isDark, setIsDark] = useState(false);
+
+  // Easter Egg 5-click tracking on logo
+  const [clickCount, setClickCount] = useState(0);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
 
   // Filter out hidden sections
   const enabledIds = new Set(
@@ -84,6 +92,23 @@ export function Navbar() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const handleLogoClick = () => {
+    const now = Date.now();
+    if (now - lastClickTime < 2500) {
+      const nextCount = clickCount + 1;
+      setClickCount(nextCount);
+      if (nextCount >= 5) {
+        sound.pop();
+        setShowEasterEgg(true);
+        setClickCount(0);
+      }
+    } else {
+      setClickCount(1);
+    }
+    setLastClickTime(now);
+    go("home");
+  };
+
   const openResume = () => {
     sound.pop();
     setOpen(false);
@@ -102,18 +127,19 @@ export function Navbar() {
         aria-label="Primary"
       >
         <button
-          onClick={() => go("home")}
-          className="flex items-center gap-2.5 text-left group"
-          aria-label="Go to top"
+          onClick={handleLogoClick}
+          className="flex items-center gap-2.5 text-left group cursor-pointer"
+          aria-label="Go to top (Click 5 times for secret doodle)"
+          title="Farhadul Islam (Click 5 times for a secret Easter Egg!)"
         >
           {profileConfig.avatar ? (
             <img
               src={profileConfig.avatar}
               alt={profileConfig.name || profile.name}
-              className="size-9 rounded-md object-cover border-2 border-slate-900 dark:border-slate-600 shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000] transition-transform duration-200 group-hover:scale-105"
+              className="size-9 rounded-md object-cover border-2 border-slate-900 dark:border-slate-600 shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000] transition-transform duration-200 group-hover:scale-105 active:scale-95"
             />
           ) : (
-            <span className="grid size-9 place-items-center rounded-md border-2 border-slate-900 dark:border-slate-600 bg-primary text-sm font-bold text-primary-foreground shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000]">
+            <span className="grid size-9 place-items-center rounded-md border-2 border-slate-900 dark:border-slate-600 bg-primary text-sm font-bold text-primary-foreground shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000] transition-transform duration-200 group-hover:scale-105 active:scale-95">
               {profile.initials}
             </span>
           )}
@@ -166,6 +192,23 @@ export function Navbar() {
         </ul>
 
         <div className="flex items-center gap-2">
+          {/* Bangla / English Language Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              sound.click();
+              setLanguage(isBn ? "en" : "bn");
+            }}
+            className="inline-flex items-center gap-1 rounded-md border-2 border-slate-900 dark:border-slate-600 bg-card px-2 py-1 text-xs font-mono font-bold text-foreground shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000] transition-all hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+            title="Toggle language (English / বাংলা)"
+            aria-label="Toggle language"
+          >
+            <Languages className="size-3 text-primary" />
+            <span className={!isBn ? "text-primary font-extrabold" : "text-muted-foreground"}>EN</span>
+            <span className="text-slate-400">/</span>
+            <span className={isBn ? "text-rose-600 dark:text-rose-400 font-extrabold" : "text-muted-foreground"}>বাং</span>
+          </button>
+
           {/* Chalkboard / Dark Mode Toggle */}
           <button
             type="button"
@@ -228,6 +271,21 @@ export function Navbar() {
           className="mx-auto mt-2 grid max-w-6xl gap-1 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-card p-3 shadow-[4px_4px_0px_#0f172a] dark:shadow-[4px_4px_0px_#000] lg:hidden"
           style={{ width: "min(100% - 1.5rem, 72rem)" }}
         >
+          {/* Mobile Language Switch */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800 mb-1">
+            <span className="font-mono text-xs font-bold text-muted-foreground">Language / ভাষা</span>
+            <button
+              type="button"
+              onClick={() => {
+                sound.click();
+                setLanguage(isBn ? "en" : "bn");
+              }}
+              className="rounded border border-slate-900 dark:border-slate-700 bg-secondary px-2.5 py-1 text-xs font-mono font-bold"
+            >
+              {isBn ? "বাংলা (Active)" : "English (Active)"}
+            </button>
+          </div>
+
           {filteredNavSections.map((s) => (
             <button
               key={`${s.id}-${s.label}`}
@@ -260,6 +318,12 @@ export function Navbar() {
           </button>
         </div>
       )}
+
+      {/* Easter Egg Secret Doodle Modal */}
+      <EasterEggDoodleModal
+        isOpen={showEasterEgg}
+        onClose={() => setShowEasterEgg(false)}
+      />
     </header>
   );
 }
