@@ -5,6 +5,7 @@ import { GithubIcon, LinkedinIcon } from "./BrandIcons";
 import { track } from "./analytics";
 import { sound } from "@/lib/sound";
 import { useHomeSectionsConfig } from "@/hooks/usePortfolioData";
+import { HeroPortrait } from "./HeroPortrait";
 
 function go(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -147,51 +148,11 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Right Column: Taped Polaroid Photo & Handwritten Sticky Note */}
-        <div className="relative mx-auto flex flex-col items-center justify-center pt-4 sm:pt-0">
-          {/* Polaroid Frame */}
-          <div className="relative rotate-[-2deg] transition-transform duration-300 hover:rotate-0">
-            {/* Masking tape on top */}
-            <div
-              aria-hidden
-              className="absolute -top-3 left-1/2 -translate-x-1/2 w-28 h-7 bg-amber-200/90 dark:bg-amber-400/30 border border-amber-400/80 rotate-[1deg] shadow-sm z-20"
-            />
-
-            <div className="polaroid w-64 sm:w-72">
-              <div className="relative aspect-[4/5] overflow-hidden rounded border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-900">
-                <img
-                  src={heroData.photoUrl || profile.photo}
-                  alt={`Portrait of ${heroData.name || profile.name}`}
-                  className="size-full object-cover object-top"
-                  width={600}
-                  height={750}
-                  loading="eager"
-                  decoding="async"
-                />
-              </div>
-              <p className="font-hand text-xl text-center text-slate-800 dark:text-slate-200 mt-3 font-semibold">
-                Farhad @ work — 2026 ✦
-              </p>
-            </div>
-          </div>
-
-          {/* Pinned Sticky Note Annotation */}
-          <div className="relative -mt-6 sm:-mt-8 ml-auto mr-4 w-56 sm:w-64 rotate-[3deg] rounded-md border-2 border-slate-900 dark:border-slate-600 bg-[#fef9c3] dark:bg-[#34301d] p-3.5 shadow-[4px_4px_0px_#0f172a] dark:shadow-[4px_4px_0px_#000] z-10 transition-transform duration-200 hover:rotate-1">
-            {/* Cute pin dot */}
-            <div
-              aria-hidden
-              className="absolute -top-2 left-4 size-4 rounded-full bg-rose-600 border border-slate-900 shadow-sm"
-            />
-            <p className="font-hand text-base sm:text-lg leading-snug text-slate-900 dark:text-amber-100 font-semibold">
-              "Building digital products with clean engineering, real deployments & measurable craft."
-            </p>
-            <div className="mt-2 text-right">
-              <span className="font-mono text-[10px] font-bold uppercase text-slate-600 dark:text-amber-200/70">
-                // dev notes
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* Right Column: Hero Portrait with 10s Matrix Code Transition */}
+        <HeroPortrait
+          initialPhoto={heroData.photoUrl || profile.photo}
+          name={heroData.name || profile.name}
+        />
       </div>
 
       {/* Bento Stats / Metrics Grid */}
