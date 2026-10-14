@@ -9,12 +9,21 @@ import {
   getTestimonials,
   getCertificates,
   getProfileConfig,
+  getHomeSectionsConfig,
+  getAchievements,
+  getAchievementSettings,
   type BlogPost,
   type DynamicProject,
   type DynamicTestimonial,
   type DynamicCertificate,
   type UserProfileConfig,
+  type HomeSectionsConfig,
+  type AchievementItem,
+  type AchievementSettings,
   DEFAULT_PROFILE_CONFIG,
+  DEFAULT_HOME_SECTIONS_CONFIG,
+  DEFAULT_ACHIEVEMENTS,
+  DEFAULT_ACHIEVEMENT_SETTINGS,
 } from "@/lib/supabase";
 import {
   projects as defaultProjects,
@@ -232,3 +241,71 @@ export function useProfileConfig(): UserProfileConfig {
 
   return config;
 }
+
+export function useHomeSectionsConfig(): HomeSectionsConfig {
+  const [config, setConfig] = useState<HomeSectionsConfig>(DEFAULT_HOME_SECTIONS_CONFIG);
+
+  const reload = useCallback(() => {
+    setConfig(getHomeSectionsConfig());
+  }, []);
+
+  useEffect(() => {
+    reload();
+    const handleUpdate = () => reload();
+    window.addEventListener("portfolio_data_changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("portfolio_data_changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [reload]);
+
+  return config;
+}
+
+export function useAchievements() {
+  const [achievements, setAchievements] = useState<AchievementItem[]>(DEFAULT_ACHIEVEMENTS);
+  const [loading, setLoading] = useState(true);
+
+  const reload = useCallback(() => {
+    getAchievements().then((data) => {
+      setAchievements(data);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    reload();
+    const handleUpdate = () => reload();
+    window.addEventListener("portfolio_data_changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("portfolio_data_changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [reload]);
+
+  return { achievements, loading, reload };
+}
+
+export function useAchievementSettings(): AchievementSettings {
+  const [settings, setSettings] = useState<AchievementSettings>(DEFAULT_ACHIEVEMENT_SETTINGS);
+
+  const reload = useCallback(() => {
+    setSettings(getAchievementSettings());
+  }, []);
+
+  useEffect(() => {
+    reload();
+    const handleUpdate = () => reload();
+    window.addEventListener("portfolio_data_changed", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("portfolio_data_changed", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [reload]);
+
+  return settings;
+}
+

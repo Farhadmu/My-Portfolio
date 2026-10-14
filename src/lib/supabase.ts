@@ -8,6 +8,7 @@ import {
   testimonials as defaultTestimonials,
   certificates as defaultCertificates,
   blogPosts as defaultBlogPosts,
+  aboutFocus,
   profile,
   type Project,
   type Level,
@@ -18,6 +19,7 @@ export interface BlogComment {
   name: string;
   text: string;
   createdAt: string;
+  approved?: boolean;
 }
 
 export interface BlogPost {
@@ -44,6 +46,12 @@ export interface BlogPost {
   comments?: BlogComment[];
   featured?: boolean;
   published?: boolean;
+  status?: "draft" | "published" | "scheduled";
+  publishAt?: string;
+  views?: number;
+  claps?: number;
+  metaTitle?: string;
+  metaDescription?: string;
   createdAt: string;
 }
 
@@ -146,6 +154,198 @@ export const DEFAULT_PROFILE_CONFIG: UserProfileConfig = {
   educationTag: "🎓 Computer Science @ BAIUST",
   architectureTag: "⚡ Systems & Full-Stack Architecture",
   activeTag: "● Active Publications",
+};
+
+export type SectionBgStyle =
+  | "bg-paper"
+  | "bg-graph"
+  | "bg-ruled"
+  | "bg-dots"
+  | "bg-hatch"
+  | "bg-sticky"
+  | "bg-blueprint"
+  | "bg-dark-ink";
+
+export interface SectionItemConfig {
+  id: string;
+  label: string;
+  navLabel?: string;
+  title?: string;
+  desc?: string;
+  eyebrow?: string;
+  enabled: boolean;
+  bgStyle: SectionBgStyle;
+}
+
+export interface HeroConfig {
+  name: string;
+  tagline: string;
+  intro: string;
+  badgeText: string;
+  location: string;
+  photoUrl?: string;
+  resumeUrl?: string;
+}
+
+export interface AboutConfig {
+  title: string;
+  desc: string;
+  bioHeading: string;
+  bioText: string;
+  focusPoints: string[];
+}
+
+export interface HomeSectionsConfig {
+  sections: SectionItemConfig[];
+  hero: HeroConfig;
+  about: AboutConfig;
+}
+
+export interface AchievementItem {
+  id: string;
+  title: string;
+  shortMessage: string;
+  type: "Competition" | "Certificate" | "Award" | "Other";
+  iconType?: "trophy" | "certificate" | "medal" | "star";
+  stampText?: string;
+  image?: string;
+  date: string;
+  issuer: string;
+  details: string;
+  link?: string;
+  enabled: boolean;
+  sortOrder: number;
+}
+
+export interface AchievementSettings {
+  enabled: boolean;
+  durationSeconds: number;
+  startDelaySeconds: number;
+  soundEnabled?: boolean;
+}
+
+export const DEFAULT_HOME_SECTIONS_CONFIG: HomeSectionsConfig = {
+  sections: [
+    { id: "hero", label: "Hero Banner", navLabel: "Home", enabled: true, bgStyle: "bg-paper" },
+    { id: "about", label: "About Me", navLabel: "About", title: "Who's Behind the Systems?", desc: "Software Engineer specializing in scalable full-stack architectures, low-latency interfaces, and algorithmic problem solving.", eyebrow: "ABOUT ME & PHILOSOPHY", enabled: true, bgStyle: "bg-graph" },
+    { id: "skills", label: "Skills & Tech", navLabel: "Skills", title: "Technical Stack & Craft", desc: "Core languages, frameworks, databases and system utilities I deploy in production.", eyebrow: "SKILLS & ARSENAL", enabled: true, bgStyle: "bg-ruled" },
+    { id: "projects", label: "Projects", navLabel: "Projects", title: "Shipped Software & Applications", desc: "Real-world web apps, market solutions and full-stack platforms with live deployments.", eyebrow: "FEATURED WORK", enabled: true, bgStyle: "bg-dots" },
+    { id: "education", label: "Education", navLabel: "Education", title: "Academic & Professional Foundations", desc: "University degree, intensive technical bootcamps, and foundational milestones.", eyebrow: "EDUCATION & TRAINING", enabled: true, bgStyle: "bg-sticky" },
+    { id: "experience", label: "Experience & Hackathons", navLabel: "Experience", title: "Hackathons, Internships & Milestones", desc: "High-pressure competitive hackathons and hands-on front-end AI engineering experience.", eyebrow: "TRACK RECORD", enabled: true, bgStyle: "bg-blueprint" },
+    { id: "credibility", label: "Credibility & Proof", navLabel: "Credibility", title: "Verified Credentials & Recommendations", desc: "Case study breakdown, mentor recommendations and verified honors.", eyebrow: "PROOF OF WORK", enabled: true, bgStyle: "bg-paper" },
+    { id: "github", label: "GitHub Dashboard", navLabel: "GitHub", title: "Open Source Activity & Metrics", desc: "Public repositories, commit streaks, contribution volume and language distribution.", eyebrow: "ACTIVITY & STATS", enabled: true, bgStyle: "bg-dark-ink" },
+    { id: "activity", label: "Live Activity", navLabel: "Activity", title: "Currently Building & Recent Logs", desc: "What's in my active local pipeline and latest engineering writeups.", eyebrow: "DISPATCHES", enabled: true, bgStyle: "bg-dots" },
+    { id: "services", label: "Services & Capabilities", navLabel: "Services", title: "Software Engineering Capabilities", desc: "From robust backend APIs and scalable architectures to clean, responsive user interfaces.", eyebrow: "WHAT I DO", enabled: true, bgStyle: "bg-hatch" },
+    { id: "guestbook", label: "Guestbook Wall", navLabel: "Guestbook", title: "Visitor Guestbook Wall", desc: "Leave a digital trace, say hello, or share quick feedback.", eyebrow: "COMMUNITY", enabled: true, bgStyle: "bg-ruled" },
+    { id: "contact", label: "Contact", navLabel: "Contact", title: "Let's Build Something Together", desc: "Have a project in mind, an internship opening, or just want to discuss software? Drop a line.", eyebrow: "GET IN TOUCH", enabled: true, bgStyle: "bg-paper" },
+  ],
+  hero: {
+    name: profile.name,
+    tagline: profile.tagline,
+    intro: profile.intro,
+    badgeText: "✦ AVAILABLE FOR HIRE & COLLABORATION",
+    location: profile.location,
+    photoUrl: profile.photo,
+    resumeUrl: profile.resume,
+  },
+  about: {
+    title: "Who's Behind the Systems?",
+    desc: "Software Engineer specializing in scalable full-stack architectures, low-latency interfaces, and algorithmic problem solving.",
+    bioHeading: "Hi, I'm Farhadul Islam",
+    bioText: "CSE undergraduate at BAIUST building modern, performant and accessible web products. I turn ideas into shipped interfaces — clean code, real deployments, measurable results.",
+    focusPoints: aboutFocus || [
+      "Exploring Next.js & modern React patterns",
+      "Practicing Competitive Programming with C++",
+      "Strengthening Advanced JavaScript, React & DSA",
+      "Goal: Become a Full Stack Developer",
+      "Daily driving Garuda Linux as primary OS",
+    ],
+  },
+};
+
+export const DEFAULT_ACHIEVEMENTS: AchievementItem[] = [
+  {
+    id: "ach-1",
+    title: "SUST CSE Carnival 2026 — 6th Place",
+    shortMessage: "6th place out of 700+ teams in 24-hr onsite national hackathon!",
+    type: "Competition",
+    iconType: "trophy",
+    stampText: "6th PLACE!",
+    image: "",
+    date: "Jul 2026",
+    issuer: "Shahjalal University of Science & Technology",
+    details: "Cleared the preliminary round among 700+ registered teams to reach top 50, survived a 24-hour onsite hackathon to advance into final 15, and placed 6th overall with 'Super Agent Liquidity Risk Intelligence' presented by bKash.",
+    link: "https://super-agent-liquidity-risk-intelligence-mdrk.onrender.com",
+    enabled: true,
+    sortOrder: 1,
+  },
+  {
+    id: "ach-2",
+    title: "AI-Complete Web Development — Level 1",
+    shortMessage: "Ranked in Top 300 of 5000+ students · EJP & SCIC placement",
+    type: "Certificate",
+    iconType: "medal",
+    stampText: "TOP 300",
+    image: "",
+    date: "2025",
+    issuer: "Programming Hero, Batch 13",
+    details: "Intensive full-stack bootcamp covering HTML, CSS, JavaScript, React, Node.js, MongoDB and Firebase. Ranked in the Top 300 out of 5000+ students, earning Elite Junior Program (EJP) placement.",
+    link: "",
+    enabled: true,
+    sortOrder: 2,
+  },
+  {
+    id: "ach-3",
+    title: "AI-Driven Software Engineer Bootcamp — Level 2",
+    shortMessage: "Advanced backend engineering, system design & DevOps",
+    type: "Certificate",
+    iconType: "certificate",
+    stampText: "VERIFIED",
+    image: "",
+    date: "2026 (Running)",
+    issuer: "Programming Hero, Batch 7",
+    details: "Advanced backend-focused bootcamp covering system design, advanced Node.js, relational modeling with PostgreSQL, Docker containerization, and modern AI engineering.",
+    link: "",
+    enabled: true,
+    sortOrder: 3,
+  },
+  {
+    id: "ach-4",
+    title: "SUST CSE Carnival 2026 — 6th Place Honor",
+    shortMessage: "National hackathon award for fintech AI risk intelligence",
+    type: "Award",
+    iconType: "trophy",
+    stampText: "FINALIST",
+    image: "",
+    date: "2026",
+    issuer: "Shahjalal University of Science & Technology",
+    details: "Official certificate of achievement from SUST CSE Department and bKash for placing 6th among 700+ registered teams in Bangladesh.",
+    link: "",
+    enabled: true,
+    sortOrder: 4,
+  },
+  {
+    id: "ach-5",
+    title: "Front-End AI Engineering Internship",
+    shortMessage: "Front-End AI-assisted web engineering & responsive UI systems",
+    type: "Certificate",
+    iconType: "star",
+    stampText: "COMPLETED",
+    image: "",
+    date: "2026",
+    issuer: "FlyRank AI",
+    details: "Self-paced remote internship building responsive, mobile-optimized websites and ecommerce components with clean Tailwind execution and AI-assisted workflows.",
+    link: "",
+    enabled: true,
+    sortOrder: 5,
+  },
+];
+
+export const DEFAULT_ACHIEVEMENT_SETTINGS: AchievementSettings = {
+  enabled: true,
+  durationSeconds: 6,
+  startDelaySeconds: 2.5,
+  soundEnabled: false,
 };
 
 // Check for Supabase env credentials
@@ -301,6 +501,9 @@ const STORAGE_KEYS = {
   TESTIMONIALS: "farhad_portfolio_testimonials",
   CERTIFICATES: "farhad_portfolio_certificates",
   PROFILE_CONFIG: "farhad_portfolio_profile_config",
+  HOME_SECTIONS: "farhad_portfolio_home_sections",
+  ACHIEVEMENTS: "farhad_portfolio_achievements",
+  ACHIEVEMENT_SETTINGS: "farhad_portfolio_achievement_settings",
 };
 
 // Dispatch helper to trigger reactivity across all subscribed components
@@ -590,6 +793,12 @@ export const saveBlog = async (
     comments: existing?.comments || [],
     featured: blog.featured ?? false,
     published: blog.published ?? true,
+    status: blog.status || existing?.status || "published",
+    publishAt: blog.publishAt || existing?.publishAt,
+    views: existing?.views ?? blog.views ?? 0,
+    claps: existing?.claps ?? blog.claps ?? 0,
+    metaTitle: blog.metaTitle || existing?.metaTitle || blog.title,
+    metaDescription: blog.metaDescription || existing?.metaDescription || blog.excerpt,
     createdAt: existing ? existing.createdAt : now,
   };
 
@@ -727,6 +936,74 @@ export const addCommentToBlogPost = async (
         ...b,
         comments: updatedComments,
       };
+    }
+    return b;
+  });
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.BLOGS, JSON.stringify(updated));
+  }
+  triggerDataUpdate();
+  return updatedComments;
+};
+
+export const incrementBlogViews = async (id: string): Promise<number> => {
+  const currentBlogs = await getBlogs();
+  let newViews = 1;
+  const updated = currentBlogs.map((b) => {
+    if (b.id === id) {
+      newViews = (b.views || 0) + 1;
+      return { ...b, views: newViews };
+    }
+    return b;
+  });
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from("blogs").update({ views: newViews }).eq("id", id);
+    } catch (err) {
+      console.warn("Supabase view increment error:", err);
+    }
+  }
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.BLOGS, JSON.stringify(updated));
+  }
+  triggerDataUpdate();
+  return newViews;
+};
+
+export const clapForBlogPost = async (id: string): Promise<number> => {
+  const currentBlogs = await getBlogs();
+  let newClaps = 1;
+  const updated = currentBlogs.map((b) => {
+    if (b.id === id) {
+      newClaps = (b.claps || 0) + 1;
+      return { ...b, claps: newClaps };
+    }
+    return b;
+  });
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.BLOGS, JSON.stringify(updated));
+  }
+  triggerDataUpdate();
+  return newClaps;
+};
+
+export const toggleCommentApproval = async (
+  blogId: string,
+  commentId: string
+): Promise<BlogComment[]> => {
+  const currentBlogs = await getBlogs();
+  let updatedComments: BlogComment[] = [];
+  const updated = currentBlogs.map((b) => {
+    if (b.id === blogId) {
+      const existing = b.comments || [];
+      updatedComments = existing.map((c) =>
+        c.id === commentId ? { ...c, approved: c.approved === false ? true : false } : c
+      );
+      return { ...b, comments: updatedComments };
     }
     return b;
   });
@@ -1155,6 +1432,145 @@ export const deleteGuestbookEntry = async (id: string): Promise<GuestbookEntry[]
 };
 
 // ==========================================
+// 10. HOME SECTIONS CONFIGURATION API
+// ==========================================
+let memoryHomeSectionsCache: HomeSectionsConfig | null = null;
+
+export const getHomeSectionsConfig = (): HomeSectionsConfig => {
+  if (typeof window === "undefined") return DEFAULT_HOME_SECTIONS_CONFIG;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.HOME_SECTIONS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const merged: HomeSectionsConfig = {
+        ...DEFAULT_HOME_SECTIONS_CONFIG,
+        ...parsed,
+        hero: { ...DEFAULT_HOME_SECTIONS_CONFIG.hero, ...(parsed.hero || {}) },
+        about: { ...DEFAULT_HOME_SECTIONS_CONFIG.about, ...(parsed.about || {}) },
+      };
+      // Keep sections list synced with default sections if any are missing
+      const existingIds = new Set(merged.sections.map((s) => s.id));
+      for (const defSec of DEFAULT_HOME_SECTIONS_CONFIG.sections) {
+        if (!existingIds.has(defSec.id)) {
+          merged.sections.push(defSec);
+        }
+      }
+      memoryHomeSectionsCache = merged;
+      return merged;
+    }
+  } catch (e) {
+    console.error("Failed to parse home sections config:", e);
+  }
+  return memoryHomeSectionsCache || DEFAULT_HOME_SECTIONS_CONFIG;
+};
+
+export const saveHomeSectionsConfig = (config: HomeSectionsConfig): HomeSectionsConfig => {
+  if (typeof window !== "undefined") {
+    memoryHomeSectionsCache = config;
+    localStorage.setItem(STORAGE_KEYS.HOME_SECTIONS, JSON.stringify(config));
+    triggerDataUpdate();
+  }
+  return config;
+};
+
+export const resetHomeSectionsConfig = (): HomeSectionsConfig => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(STORAGE_KEYS.HOME_SECTIONS);
+    memoryHomeSectionsCache = DEFAULT_HOME_SECTIONS_CONFIG;
+    triggerDataUpdate();
+  }
+  return DEFAULT_HOME_SECTIONS_CONFIG;
+};
+
+// ==========================================
+// 11. ACHIEVEMENT POPUPS API
+// ==========================================
+let memoryAchievementsCache: AchievementItem[] | null = null;
+
+export const getAchievements = async (): Promise<AchievementItem[]> => {
+  if (typeof window === "undefined") return DEFAULT_ACHIEVEMENTS;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryAchievementsCache = parsed;
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load achievements from storage:", e);
+  }
+  localStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(DEFAULT_ACHIEVEMENTS));
+  memoryAchievementsCache = DEFAULT_ACHIEVEMENTS;
+  return DEFAULT_ACHIEVEMENTS;
+};
+
+export const saveAchievements = async (items: AchievementItem[]): Promise<AchievementItem[]> => {
+  if (typeof window !== "undefined") {
+    memoryAchievementsCache = items;
+    localStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(items));
+    triggerDataUpdate();
+  }
+  return items;
+};
+
+export const saveAchievement = async (item: AchievementItem): Promise<AchievementItem[]> => {
+  const current = await getAchievements();
+  let finalImage = item.image;
+  if (finalImage && finalImage.startsWith("data:image/")) {
+    finalImage = await ensureCompactImage(finalImage, 600, 600, 0.85);
+  }
+
+  const id = item.id || `ach-${Date.now()}`;
+  const processedItem: AchievementItem = { ...item, id, image: finalImage };
+  const exists = current.some((a) => a.id === id);
+  const updated = exists
+    ? current.map((a) => (a.id === id ? processedItem : a))
+    : [...current, processedItem];
+
+  return saveAchievements(updated);
+};
+
+export const deleteAchievement = async (id: string): Promise<AchievementItem[]> => {
+  const current = await getAchievements();
+  const updated = current.filter((a) => a.id !== id);
+  return saveAchievements(updated);
+};
+
+export const reorderAchievements = async (items: AchievementItem[]): Promise<AchievementItem[]> => {
+  const reindexed = items.map((item, idx) => ({ ...item, sortOrder: idx + 1 }));
+  return saveAchievements(reindexed);
+};
+
+let memoryAchievementSettingsCache: AchievementSettings | null = null;
+
+export const getAchievementSettings = (): AchievementSettings => {
+  if (typeof window === "undefined") return DEFAULT_ACHIEVEMENT_SETTINGS;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ACHIEVEMENT_SETTINGS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const merged = { ...DEFAULT_ACHIEVEMENT_SETTINGS, ...parsed };
+      memoryAchievementSettingsCache = merged;
+      return merged;
+    }
+  } catch (e) {
+    console.error("Failed to parse achievement settings:", e);
+  }
+  return memoryAchievementSettingsCache || DEFAULT_ACHIEVEMENT_SETTINGS;
+};
+
+export const saveAchievementSettings = (settings: AchievementSettings): AchievementSettings => {
+  if (typeof window !== "undefined") {
+    memoryAchievementSettingsCache = settings;
+    localStorage.setItem(STORAGE_KEYS.ACHIEVEMENT_SETTINGS, JSON.stringify(settings));
+    triggerDataUpdate();
+  }
+  return settings;
+};
+
+// ==========================================
 // RESET ALL TO DEFAULTS
 // ==========================================
 export const resetPortfolioData = () => {
@@ -1170,7 +1586,13 @@ export const resetPortfolioData = () => {
     localStorage.removeItem(STORAGE_KEYS.TESTIMONIALS);
     localStorage.removeItem(STORAGE_KEYS.CERTIFICATES);
     localStorage.removeItem(STORAGE_KEYS.PROFILE_CONFIG);
+    localStorage.removeItem(STORAGE_KEYS.HOME_SECTIONS);
+    localStorage.removeItem(STORAGE_KEYS.ACHIEVEMENTS);
+    localStorage.removeItem(STORAGE_KEYS.ACHIEVEMENT_SETTINGS);
     localStorage.removeItem(GUESTBOOK_STORAGE_KEY);
+    memoryHomeSectionsCache = null;
+    memoryAchievementsCache = null;
+    memoryAchievementSettingsCache = null;
     triggerDataUpdate();
   }
 };

@@ -166,3 +166,50 @@ CREATE POLICY "Public Delete Education" ON public.education FOR DELETE USING (tr
 CREATE POLICY "Public Insert Services" ON public.services FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public Update Services" ON public.services FOR UPDATE USING (true);
 CREATE POLICY "Public Delete Services" ON public.services FOR DELETE USING (true);
+
+-- 8. Home Sections Config Table
+CREATE TABLE IF NOT EXISTS public.home_sections (
+  id TEXT PRIMARY KEY,
+  config JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 9. Achievements Table
+CREATE TABLE IF NOT EXISTS public.achievements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  short_message TEXT NOT NULL,
+  type TEXT DEFAULT 'Certificate',
+  image TEXT,
+  date TEXT NOT NULL,
+  issuer TEXT NOT NULL,
+  details TEXT NOT NULL,
+  link TEXT,
+  enabled BOOLEAN DEFAULT true,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 10. Achievement Settings Table
+CREATE TABLE IF NOT EXISTS public.achievement_settings (
+  id TEXT PRIMARY KEY DEFAULT 'global',
+  enabled BOOLEAN DEFAULT true,
+  duration_seconds INTEGER DEFAULT 6,
+  start_delay_seconds NUMERIC DEFAULT 2.5,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable RLS & Public Access
+ALTER TABLE public.home_sections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.achievement_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public Read Home Sections" ON public.home_sections FOR SELECT USING (true);
+CREATE POLICY "Public Write Home Sections" ON public.home_sections FOR ALL USING (true);
+
+CREATE POLICY "Public Read Achievements" ON public.achievements FOR SELECT USING (true);
+CREATE POLICY "Public Write Achievements" ON public.achievements FOR ALL USING (true);
+
+CREATE POLICY "Public Read Achievement Settings" ON public.achievement_settings FOR SELECT USING (true);
+CREATE POLICY "Public Write Achievement Settings" ON public.achievement_settings FOR ALL USING (true);
+

@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { profile } from "@/data/portfolio";
-import { Loader } from "@/components/Loader";
 import { Navbar } from "@/components/Navbar";
-import { ScrollProgress, CursorGlow } from "@/components/Chrome";
+import { ScrollProgress } from "@/components/Chrome";
 import { Hero } from "@/components/Hero";
 import { About } from "@/components/About";
 import { Skills } from "@/components/Skills";
@@ -22,10 +21,12 @@ import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { ResumeModal } from "@/components/ResumeModal";
 import { MessageModal } from "@/components/MessageModal";
 import { AskFarhadAI } from "@/components/AskFarhadAI";
+import { AchievementPopup } from "@/components/AchievementPopup";
+import { useHomeSectionsConfig } from "@/hooks/usePortfolioData";
 
-const title = "Md. Farhadul Islam — CSE Student & Frontend Developer";
+const title = "Md. Farhadul Islam — Software Engineer & Builder";
 const description =
-  "Portfolio of Md. Farhadul Islam, Computer Science & Engineering student at BAIUST — React, Next.js and Node.js projects, hackathon wins and interactive 3D web experiences.";
+  "Portfolio of Md. Farhadul Islam, Computer Science & Engineering student at BAIUST — Full-stack React, Next.js, and Node.js systems, competitive hackathon wins, and production engineering.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -50,6 +51,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [isResumeOpen, setIsResumeOpen] = useState(false);
   const [isMessageOpen, setIsMessageOpen] = useState(false);
+  const homeSections = useHomeSectionsConfig();
 
   useEffect(() => {
     const handleOpenResume = () => setIsResumeOpen(true);
@@ -64,28 +66,48 @@ function Index() {
     };
   }, []);
 
+  const sectionComponentMap: Record<string, React.ReactNode> = {
+    hero: <Hero />,
+    about: <About />,
+    skills: <Skills />,
+    projects: <Projects />,
+    education: <Education />,
+    experience: <Experience />,
+    credibility: <Credibility />,
+    github: <GithubDash />,
+    activity: <LiveActivity />,
+    services: <Services />,
+    guestbook: <Guestbook />,
+    contact: <Contact />,
+  };
+
   return (
     <div className="relative min-h-screen bg-background text-foreground">
-      <Loader />
       <ScrollProgress />
-      <CursorGlow />
       <Navbar />
       <main>
-        <Hero />
-        <About />
-        <Skills />
-        <Projects />
-        <Education />
-        <Experience />
-        <Credibility />
-        <GithubDash />
-        <LiveActivity />
-        <Services />
-        <Guestbook />
-        <Contact />
+        {homeSections.sections
+          .filter((sec) => sec.enabled)
+          .map((sec, idx) => {
+            const Component = sectionComponentMap[sec.id];
+            if (!Component) return null;
+
+            const isTorn = sec.bgStyle === "bg-blueprint" || sec.bgStyle === "bg-dark-ink";
+            return (
+              <div
+                key={`${sec.id}-${idx}`}
+                className={`relative ${sec.bgStyle || "bg-paper"} ${
+                  isTorn ? "torn-edge-top torn-edge-bottom" : ""
+                }`}
+              >
+                {Component}
+              </div>
+            );
+          })}
       </main>
       <Footer />
       <CommandPalette />
+      <AchievementPopup />
       <WhatsAppFloat />
       <AskFarhadAI />
       <ResumeModal

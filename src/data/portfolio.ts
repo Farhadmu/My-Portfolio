@@ -493,7 +493,6 @@ export const navSections = [
   { id: "projects", label: "Projects" },
   { id: "education", label: "Education" },
   { id: "experience", label: "Experience" },
-  { id: "experience", label: "Hackathon" },
   { id: "contact", label: "Contact" },
 ];
 

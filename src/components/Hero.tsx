@@ -1,98 +1,113 @@
-import { ArrowRight, Eye, Mail, MapPin, Terminal, ArrowUpRight, MessageSquare } from "lucide-react";
-import { motion } from "motion/react";
+import { ArrowRight, Eye, Mail, MapPin, Terminal, ArrowUpRight, MessageSquare, Sparkles } from "lucide-react";
 import { profile, stats } from "@/data/portfolio";
-import { Hero3D } from "./three/Hero3D";
 import { Magnetic } from "./Magnetic";
 import { GithubIcon, LinkedinIcon } from "./BrandIcons";
 import { track } from "./analytics";
 import { sound } from "@/lib/sound";
-import { useProfileConfig } from "@/hooks/usePortfolioData";
+import { useHomeSectionsConfig } from "@/hooks/usePortfolioData";
 
 function go(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
 export function Hero() {
-  const profileConfig = useProfileConfig();
-  return (
-    <section id="home" className="relative min-h-[100svh] overflow-hidden px-5 pb-16 pt-32">
-      <div aria-hidden className="grid-bg absolute inset-0" />
-      <div
-        aria-hidden
-        className="absolute -left-40 top-10 size-[36rem] rounded-full opacity-25 blur-[130px] pointer-events-none"
-        style={{ background: "var(--cyan)" }}
-      />
-      <div
-        aria-hidden
-        className="absolute -right-32 bottom-0 size-[32rem] rounded-full opacity-20 blur-[140px] pointer-events-none"
-        style={{ background: "var(--violet)" }}
-      />
+  const homeSections = useHomeSectionsConfig();
+  const heroData = homeSections.hero || {
+    name: profile.name,
+    tagline: profile.tagline,
+    intro: profile.intro,
+    badgeText: "✦ AVAILABLE FOR HIRE & COLLABORATION",
+    location: profile.location,
+    photoUrl: profile.photo,
+    resumeUrl: profile.resume,
+  };
 
-      <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {/* Engineering Availability Telemetry Pill */}
-          <div className="mono mb-5 inline-flex items-center gap-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-[11px] font-semibold text-emerald-400 backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.18)]">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
-            </span>
-            <span className="tracking-wide">ACTIVE SWE PIPELINE · AVAILABLE FOR HIRE</span>
+  return (
+    <section id="home" className="relative min-h-[92svh] px-5 pb-16 pt-32 overflow-hidden">
+      <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
+        {/* Left Column: Workshop Header & Introduction */}
+        <div>
+          {/* Hand-Stamped Sticker Badge */}
+          <div className="mb-5 inline-flex items-center gap-2 rounded-md border-2 border-slate-900 bg-[#fef08a] px-3.5 py-1 text-xs font-bold uppercase tracking-wide text-slate-900 shadow-[2px_2px_0px_#0f172a]">
+            <span className="size-2 rounded-full bg-emerald-600 animate-pulse" />
+            <span>{heroData.badgeText || "✦ AVAILABLE FOR HIRE & COLLABORATION"}</span>
           </div>
 
-          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.25rem]">
-            <span className="block text-muted-foreground/80 text-xs sm:text-sm uppercase tracking-[0.25em] font-mono mb-2">
+          {/* Main Title in Bold Ink */}
+          <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-6xl lg:text-[4.2rem] text-foreground">
+            <span className="block text-slate-600 dark:text-slate-400 text-xs sm:text-sm uppercase tracking-[0.2em] font-mono mb-2 font-bold">
               Software Engineer &amp; Full-Stack Builder
             </span>
-            <span className="bg-gradient-to-r from-cyan-400 via-sky-200 to-indigo-400 bg-clip-text text-transparent drop-shadow-sm">
-              {profile.name}
+            <span className="relative inline-block text-foreground">
+              {heroData.name || profile.name}
+              {/* Signature Moment: Hand-drawn underline SVG path animation */}
+              <svg
+                className="absolute -bottom-2.5 left-0 w-full overflow-visible pointer-events-none"
+                height="14"
+                viewBox="0 0 260 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M2 9.5C65 3.5 185 2 258 8C205 13 85 12 35 11"
+                  stroke="currentColor"
+                  strokeWidth="3.8"
+                  strokeLinecap="round"
+                  className="text-primary stroke-draw"
+                />
+              </svg>
             </span>
           </h1>
 
-          <div className="mono mt-4 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 font-semibold text-primary">
-              <Terminal className="size-3.5" /> CSE @ BAIUST
+          {/* Role Badges */}
+          <div className="mt-5 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-md border-2 border-slate-900 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1 font-bold text-foreground shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000]">
+              <Terminal className="size-3.5 text-primary" /> CSE @ BAIUST
             </span>
-            <span className="text-muted-foreground/60">//</span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-secondary/50 px-2.5 py-1 font-medium text-foreground">
+            <span className="inline-flex items-center gap-1.5 rounded-md border-2 border-slate-900 dark:border-slate-600 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 font-bold text-slate-800 dark:text-amber-200 shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000]">
               Systems Architecture · React · Next.js · Node.js
             </span>
           </div>
 
-          <p className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-foreground/90 font-medium">
-            {profile.tagline}
+          {/* Tagline & Intro */}
+          <p className="mt-6 max-w-[65ch] text-base sm:text-lg leading-relaxed text-slate-800 dark:text-slate-200 font-semibold">
+            {heroData.tagline || profile.tagline}
           </p>
-          <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            {profile.intro}
+          <p className="mt-2.5 max-w-[65ch] text-sm leading-relaxed text-slate-600 dark:text-slate-400 font-normal">
+            {heroData.intro || profile.intro}
           </p>
 
+          {/* Action Buttons */}
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Magnetic>
               <button
-                onClick={() => go("projects")}
-                className="group inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--glow-cyan)] transition-all hover:scale-[1.02]"
-                style={{ background: "var(--gradient-brand)" }}
+                type="button"
+                onClick={() => {
+                  sound.click();
+                  go("projects");
+                }}
+                className="group inline-flex items-center gap-2 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#0f172a]"
               >
-                View Projects
+                <span>View Projects</span>
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </button>
             </Magnetic>
+
             <Magnetic>
               <a
-                href={profile.resume}
+                href={heroData.resumeUrl || profile.resume}
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => track("resume_click", { source: "hero" })}
-                className="group inline-flex items-center gap-2 rounded-xl border border-primary/50 bg-primary/10 px-5 py-3 text-sm font-semibold text-primary backdrop-blur-md transition-all duration-300 hover:bg-primary/20 hover:border-primary hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-2 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-card px-5 py-3 text-sm font-bold text-foreground shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5"
               >
-                <Eye className="size-4 text-primary transition-transform group-hover:scale-110" />
+                <Eye className="size-4 text-primary" />
                 <span>View Resume</span>
-                <ArrowUpRight className="size-3.5 opacity-70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <ArrowUpRight className="size-3.5 opacity-70" />
               </a>
             </Magnetic>
+
             <Magnetic>
               <button
                 type="button"
@@ -100,18 +115,15 @@ export function Hero() {
                   sound.pop();
                   window.dispatchEvent(new CustomEvent("open_message_modal"));
                 }}
-                className="group relative inline-flex items-center gap-2.5 rounded-xl border border-primary/50 bg-gradient-to-r from-primary/15 via-card to-accent/15 px-5 py-3 text-sm font-bold text-foreground backdrop-blur-md shadow-[0_0_20px_rgba(6,182,212,0.22)] transition-all duration-300 hover:border-primary hover:bg-primary/25 hover:shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:-translate-y-0.5 active:scale-95"
+                className="group inline-flex items-center gap-2 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-[#fef08a] dark:bg-amber-300 px-5 py-3 text-sm font-bold text-slate-900 shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5"
               >
-                <span className="relative flex size-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
-                </span>
-                <MessageSquare className="size-4 text-primary transition-transform group-hover:scale-110" />
+                <MessageSquare className="size-4 text-slate-900" />
                 <span>Message Farhad</span>
               </button>
             </Magnetic>
           </div>
 
+          {/* Social Links & Location */}
           <div className="mt-8 flex items-center gap-3">
             {[
               { href: profile.github, icon: GithubIcon, label: "GitHub" },
@@ -124,60 +136,78 @@ export function Hero() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={label}
-                className="glass grid size-10 place-items-center rounded-xl text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-primary hover:border-primary/40"
+                className="grid size-10 place-items-center rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-card text-foreground shadow-[2px_2px_0px_#0f172a] dark:shadow-[2px_2px_0px_#000] transition-all hover:-translate-y-0.5 hover:bg-primary hover:text-primary-foreground"
               >
                 <I className="size-4" />
               </a>
             ))}
-            <span className="mono ml-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-              <MapPin className="size-3.5 text-primary/70" /> {profile.location}
+            <span className="font-mono ml-2 inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-semibold">
+              <MapPin className="size-3.5 text-rose-600" /> {heroData.location || profile.location}
             </span>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mx-auto w-full max-w-[280px] pb-10 sm:max-w-sm sm:pb-0 lg:max-w-md"
-        >
-          <div className="relative aspect-square">
-            <div className="absolute inset-0">
-              <Hero3D />
-            </div>
-            <div className="pointer-events-none absolute inset-0 grid place-items-center">
-              <div className="relative size-44 overflow-hidden rounded-full border-2 border-primary/40 shadow-[0_0_40px_rgba(139,92,246,0.35)] ring-4 ring-primary/20 sm:size-56">
+        {/* Right Column: Taped Polaroid Photo & Handwritten Sticky Note */}
+        <div className="relative mx-auto flex flex-col items-center justify-center pt-4 sm:pt-0">
+          {/* Polaroid Frame */}
+          <div className="relative rotate-[-2deg] transition-transform duration-300 hover:rotate-0">
+            {/* Masking tape on top */}
+            <div
+              aria-hidden
+              className="absolute -top-3 left-1/2 -translate-x-1/2 w-28 h-7 bg-amber-200/90 dark:bg-amber-400/30 border border-amber-400/80 rotate-[1deg] shadow-sm z-20"
+            />
+
+            <div className="polaroid w-64 sm:w-72">
+              <div className="relative aspect-[4/5] overflow-hidden rounded border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-900">
                 <img
-                  src={profileConfig.avatar || profile.photo}
-                  alt={`Portrait of ${profileConfig.name || profile.name}`}
+                  src={heroData.photoUrl || profile.photo}
+                  alt={`Portrait of ${heroData.name || profile.name}`}
                   className="size-full object-cover object-top"
-                  width={853}
-                  height={1600}
+                  width={600}
+                  height={750}
+                  loading="eager"
+                  decoding="async"
                 />
               </div>
+              <p className="font-hand text-xl text-center text-slate-800 dark:text-slate-200 mt-3 font-semibold">
+                Farhad @ work — 2026 ✦
+              </p>
             </div>
           </div>
-        </motion.div>
+
+          {/* Pinned Sticky Note Annotation */}
+          <div className="relative -mt-6 sm:-mt-8 ml-auto mr-4 w-56 sm:w-64 rotate-[3deg] rounded-md border-2 border-slate-900 dark:border-slate-600 bg-[#fef9c3] dark:bg-[#34301d] p-3.5 shadow-[4px_4px_0px_#0f172a] dark:shadow-[4px_4px_0px_#000] z-10 transition-transform duration-200 hover:rotate-1">
+            {/* Cute pin dot */}
+            <div
+              aria-hidden
+              className="absolute -top-2 left-4 size-4 rounded-full bg-rose-600 border border-slate-900 shadow-sm"
+            />
+            <p className="font-hand text-base sm:text-lg leading-snug text-slate-900 dark:text-amber-100 font-semibold">
+              "Building digital products with clean engineering, real deployments & measurable craft."
+            </p>
+            <div className="mt-2 text-right">
+              <span className="font-mono text-[10px] font-bold uppercase text-slate-600 dark:text-amber-200/70">
+                // dev notes
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Pro Metrics Bento Grid */}
+      {/* Bento Stats / Metrics Grid */}
       <div className="relative mx-auto mt-16 grid w-full max-w-6xl grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
-        {stats.map((s, i) => (
-          <motion.div
+        {stats.map((s) => (
+          <div
             key={s.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 + i * 0.08, duration: 0.6 }}
-            className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 sm:p-5 text-center backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:bg-card/90 hover:shadow-[0_15px_30px_-10px_rgba(6,182,212,0.2)] hover:-translate-y-1"
+            className="group relative rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-card p-4 sm:p-5 text-center shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a]"
           >
-            <div className="absolute top-0 inset-x-4 h-[2px] bg-gradient-to-r from-transparent via-primary/0 to-transparent transition-all duration-300 group-hover:via-primary" />
-            <div className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
+            <div className="text-2xl sm:text-3xl font-extrabold text-primary">
               {s.value}
             </div>
-            <div className="mono mt-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+            <div className="font-mono mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {s.label}
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>

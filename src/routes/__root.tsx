@@ -13,6 +13,7 @@ import { Analytics } from "@vercel/analytics/react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { profile } from "../data/portfolio";
+import { PageLoader } from "@/components/Loader";
 
 function NotFoundComponent() {
   return (
@@ -93,9 +94,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: `${profile.name} — ${profile.role}` },
       { name: "twitter:description", content: profile.intro },
       { name: "twitter:image", content: `${profile.siteUrl}/og-image.png` },
-      { name: "theme-color", content: "#080a10" },
+      { name: "theme-color", content: "#fcfbf7" },
     ],
     links: [
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous" as const,
+      },
+      {
+        rel: "preload",
+        as: "style",
+        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@400..700&family=JetBrains+Mono:wght@400;500;600&display=swap",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@400..700&family=JetBrains+Mono:wght@400;500;600&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -117,8 +136,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('farhad_theme');
+                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (saved === 'dark' || (!saved && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <HeadContent />
       </head>
       <body>
@@ -134,6 +170,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <PageLoader />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Analytics />

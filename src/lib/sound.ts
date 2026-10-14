@@ -128,4 +128,49 @@ export const sound = {
       // AudioContext unavailable or blocked
     }
   },
+
+  /** Soft paper rustle / card drop */
+  paperDrop: (force = false) => {
+    if (!soundEnabled && !force) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(240, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch {
+      // AudioContext unavailable or blocked
+    }
+  },
+
+  /** Solid rubber stamp thud */
+  stamp: (force = false) => {
+    if (!soundEnabled && !force) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(140, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.07);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.07);
+    } catch {
+      // AudioContext unavailable or blocked
+    }
+  },
 };
+

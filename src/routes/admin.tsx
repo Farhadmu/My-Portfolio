@@ -39,12 +39,19 @@ import {
   Copy,
   CornerDownRight,
   Camera,
+  ArrowUp,
+  ArrowDown,
+  Sliders,
+  EyeOff,
+  CheckSquare,
+  Palette,
 } from "lucide-react";
 import { profile } from "@/data/portfolio";
 import {
   getBlogs,
   saveBlog,
   deleteBlog,
+  toggleCommentApproval,
   getProjects,
   saveProject,
   deleteProject,
@@ -79,6 +86,18 @@ import {
   saveProfileConfigAsync,
   resetProfileConfig,
   DEFAULT_PROFILE_CONFIG,
+  getHomeSectionsConfig,
+  saveHomeSectionsConfig,
+  resetHomeSectionsConfig,
+  getAchievements,
+  saveAchievement,
+  deleteAchievement,
+  reorderAchievements,
+  getAchievementSettings,
+  saveAchievementSettings,
+  getServices,
+  saveServices,
+  ensureCompactImage,
   type UserProfileConfig,
   type GuestbookEntry,
   type BlogPost,
@@ -87,6 +106,11 @@ import {
   type DynamicTestimonial,
   type DynamicCertificate,
   type CaseStudySpotlightConfig,
+  type HomeSectionsConfig,
+  type SectionItemConfig,
+  type SectionBgStyle,
+  type AchievementItem,
+  type AchievementSettings,
 } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
@@ -103,8 +127,19 @@ function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcodeInput, setPasscodeInput] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "blogs" | "profile" | "messages" | "guestbook" | "projects" | "credibility" | "skills" | "experience" | "education" | "settings"
-  >("blogs");
+    | "sections"
+    | "achievements"
+    | "blogs"
+    | "profile"
+    | "messages"
+    | "guestbook"
+    | "projects"
+    | "credibility"
+    | "skills"
+    | "experience"
+    | "education"
+    | "settings"
+  >("sections");
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Check session storage & unread messages
@@ -243,6 +278,8 @@ function AdminPage() {
         {/* Navigation Tabs */}
         <div className="mb-8 flex flex-wrap gap-2 border-b border-border/40 pb-2">
           {[
+            { id: "sections", label: "Home Sections", icon: Layers },
+            { id: "achievements", label: "Achievement Popups", icon: Trophy },
             { id: "blogs", label: "Blogs (Feed)", icon: BookOpen },
             { id: "profile", label: "Profile & Cover (Blog)", icon: Camera },
             {
@@ -277,6 +314,8 @@ function AdminPage() {
         </div>
 
         {/* TAB CONTENTS */}
+        {activeTab === "sections" && <HomeSectionsManager />}
+        {activeTab === "achievements" && <AchievementPopupsManager />}
         {activeTab === "blogs" && <BlogsManager />}
         {activeTab === "profile" && <ProfileManager />}
         {activeTab === "messages" && <MessagesManager />}
@@ -307,6 +346,10 @@ function BlogsManager() {
   const [content, setContent] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [status, setStatus] = useState<"published" | "draft" | "scheduled">("published");
+  const [publishAt, setPublishAt] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
   const [imageUploadName, setImageUploadName] = useState("");
@@ -380,6 +423,10 @@ function BlogsManager() {
       authorRole: profile.subRole,
       authorAvatar: profile.photo,
       readTime: `${Math.max(1, Math.ceil(content.split(/\s+/).length / 180))} min read`,
+      status,
+      publishAt: status === "scheduled" && publishAt ? publishAt : undefined,
+      metaTitle: metaTitle.trim() || title,
+      metaDescription: metaDescription.trim() || excerpt.trim() || undefined,
     });
 
     toast.success(editingId ? "Blog updated successfully!" : "Post published to Tech Blog! 🎉");
@@ -396,6 +443,10 @@ function BlogsManager() {
     setContent(b.content);
     setCoverImage(b.coverImage || "");
     setVideoUrl(b.videoUrl || "");
+    setStatus(b.status || "published");
+    setPublishAt(b.publishAt || "");
+    setMetaTitle(b.metaTitle || "");
+    setMetaDescription(b.metaDescription || "");
     setIsEditing(true);
     window.scrollTo({ top: 200, behavior: "smooth" });
   };
@@ -417,6 +468,10 @@ function BlogsManager() {
     setContent("");
     setCoverImage("");
     setVideoUrl("");
+    setStatus("published");
+    setPublishAt("");
+    setMetaTitle("");
+    setMetaDescription("");
     setImageUploadName("");
     setVideoUploadName("");
     setIsEditing(false);
@@ -659,6 +714,70 @@ function BlogsManager() {
               )}
             </div>
 
+            {/* Status & Scheduling */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 rounded-xl border border-border/60 bg-secondary/20 p-3">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">
+                  Publication Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as any)}
+                  className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                >
+                  <option value="published">🟢 Published (Live for Everyone)</option>
+                  <option value="draft">📝 Draft (Hidden from Public)</option>
+                  <option value="scheduled">⏰ Scheduled Publish</option>
+                </select>
+              </div>
+              {status === "scheduled" && (
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">
+                    Scheduled Date &amp; Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={publishAt}
+                    onChange={(e) => setPublishAt(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* SEO Metadata */}
+            <div className="rounded-xl border border-border/60 bg-secondary/20 p-3 space-y-3">
+              <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <span>🌐 Per-Post SEO Metadata (Search Engines &amp; Social Previews)</span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                    Custom SEO Title
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={title || "Article Title | Farhadul Islam"}
+                    value={metaTitle}
+                    onChange={(e) => setMetaTitle(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                    Custom SEO Description
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={excerpt || "Summary of this tech guide..."}
+                    value={metaDescription}
+                    onChange={(e) => setMetaDescription(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Short Excerpt / Summary
@@ -674,7 +793,7 @@ function BlogsManager() {
 
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
-                Post Content (Markdown & Code snippets supported)
+                Post Content (Markdown &amp; Code snippets supported)
               </label>
               <textarea
                 rows={8}
@@ -709,15 +828,23 @@ function BlogsManager() {
       </div>
 
       {/* Published Blogs Table */}
-      <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
-        <h3 className="text-base font-bold mb-4">Published Articles ({blogs.length})</h3>
+      <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6 space-y-6">
+        <div>
+          <h3 className="text-base font-bold mb-1">All Articles ({blogs.length})</h3>
+          <p className="text-xs text-muted-foreground">
+            Manage drafts, scheduled releases, view counts, and claps across published tech insights.
+          </p>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-muted-foreground">
             <thead className="border-b border-border text-foreground">
               <tr>
                 <th className="py-2.5 font-semibold">Title</th>
+                <th className="py-2.5 font-semibold">Status</th>
                 <th className="py-2.5 font-semibold">Category</th>
-                <th className="py-2.5 font-semibold">Date</th>
+                <th className="py-2.5 font-semibold">Views</th>
+                <th className="py-2.5 font-semibold">Claps</th>
                 <th className="py-2.5 font-semibold">Likes</th>
                 <th className="py-2.5 font-semibold text-right">Actions</th>
               </tr>
@@ -728,14 +855,23 @@ function BlogsManager() {
                   <td className="py-3 font-medium text-foreground max-w-xs truncate">
                     {b.title}
                   </td>
-                  <td className="py-3">{b.category}</td>
                   <td className="py-3">
-                    {new Date(b.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    <span
+                      className={`inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                        b.status === "draft"
+                          ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                          : b.status === "scheduled"
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                          : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                      }`}
+                    >
+                      {b.status || "published"}
+                    </span>
                   </td>
-                  <td className="py-3">{b.likes || 0}</td>
+                  <td className="py-3">{b.category}</td>
+                  <td className="py-3 font-mono">{b.views || 0}</td>
+                  <td className="py-3 font-mono">{b.claps || 0}</td>
+                  <td className="py-3 font-mono">{b.likes || 0}</td>
                   <td className="py-3 text-right space-x-2">
                     <button
                       onClick={() => handleEdit(b)}
@@ -754,6 +890,55 @@ function BlogsManager() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Comment Approval Moderation */}
+        <div className="border-t border-border/40 pt-4">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3 flex items-center gap-2">
+            <MessageSquare className="size-3.5 text-primary" />
+            Visitor Comments Moderation
+          </h4>
+          <div className="space-y-2">
+            {blogs.flatMap((b) => (b.comments || []).map((c) => ({ ...c, blogTitle: b.title, blogId: b.id }))).length === 0 ? (
+              <p className="text-xs text-muted-foreground">No visitor comments submitted yet.</p>
+            ) : (
+              blogs
+                .flatMap((b) =>
+                  (b.comments || []).map((c) => ({
+                    ...c,
+                    blogTitle: b.title,
+                    blogId: b.id,
+                  }))
+                )
+                .map((comm) => (
+                  <div
+                    key={comm.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/60 bg-secondary/20 p-3 text-xs"
+                  >
+                    <div>
+                      <span className="font-bold text-foreground">{comm.name}</span>
+                      <span className="text-muted-foreground ml-2">on "{comm.blogTitle}"</span>
+                      <p className="mt-1 text-slate-700 dark:text-slate-300">{comm.text}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await toggleCommentApproval(comm.blogId, comm.id);
+                        loadData();
+                        toast.success("Comment status updated!");
+                      }}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-colors ${
+                        comm.approved !== false
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600"
+                          : "border-slate-300 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      }`}
+                    >
+                      {comm.approved !== false ? "✓ Approved" : "✕ Hidden"}
+                    </button>
+                  </div>
+                ))
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -3752,3 +3937,1294 @@ function SettingsManager({ onGoToProfile }: { onGoToProfile?: () => void }) {
     </div>
   );
 }
+
+/* =========================================================
+   11. HOME SECTIONS MANAGER
+   ========================================================= */
+function HomeSectionsManager() {
+  const [config, setConfig] = useState<HomeSectionsConfig>(getHomeSectionsConfig());
+  const [subTab, setSubTab] = useState<"sections" | "hero" | "about" | "services">("sections");
+  const [servicesList, setServicesList] = useState<any[]>([]);
+  const [editingServiceIndex, setEditingServiceIndex] = useState<number | null>(null);
+  const [serviceForm, setServiceForm] = useState({ icon: "layout", title: "", body: "" });
+  const [isAddingService, setIsAddingService] = useState(false);
+  const [newFocusPoint, setNewFocusPoint] = useState("");
+
+  useEffect(() => {
+    setConfig(getHomeSectionsConfig());
+    getServices().then(setServicesList);
+  }, []);
+
+  const handleMoveSection = (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= config.sections.length) return;
+    const nextSections = [...config.sections];
+    const [moved] = nextSections.splice(index, 1);
+    nextSections.splice(targetIndex, 0, moved);
+    setConfig((prev) => ({ ...prev, sections: nextSections }));
+  };
+
+  const handleToggleSection = (id: string) => {
+    setConfig((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)),
+    }));
+  };
+
+  const handleChangeBgStyle = (id: string, bgStyle: SectionBgStyle) => {
+    setConfig((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => (s.id === id ? { ...s, bgStyle } : s)),
+    }));
+  };
+
+  const handleUpdateSectionDetails = (id: string, field: "title" | "desc" | "eyebrow", val: string) => {
+    setConfig((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => (s.id === id ? { ...s, [field]: val } : s)),
+    }));
+  };
+
+  const handleSaveAll = () => {
+    saveHomeSectionsConfig(config);
+    if (servicesList.length > 0) {
+      saveServices(servicesList);
+    }
+    toast.success("Home sections and content configuration saved successfully!");
+  };
+
+  const handleResetToDefaults = () => {
+    if (confirm("Reset all home sections to default order and settings?")) {
+      const reset = resetHomeSectionsConfig();
+      setConfig(reset);
+      toast.info("Home sections reset to factory defaults.");
+    }
+  };
+
+  // Add Focus point to about
+  const handleAddFocusPoint = () => {
+    if (!newFocusPoint.trim()) return;
+    setConfig((prev) => ({
+      ...prev,
+      about: {
+        ...prev.about,
+        focusPoints: [...(prev.about.focusPoints || []), newFocusPoint.trim()],
+      },
+    }));
+    setNewFocusPoint("");
+  };
+
+  const handleRemoveFocusPoint = (idx: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      about: {
+        ...prev.about,
+        focusPoints: prev.about.focusPoints.filter((_, i) => i !== idx),
+      },
+    }));
+  };
+
+  // Services actions
+  const handleSaveServiceItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!serviceForm.title.trim() || !serviceForm.body.trim()) {
+      toast.error("Please enter a title and description for the service.");
+      return;
+    }
+
+    if (editingServiceIndex !== null) {
+      const updated = [...servicesList];
+      updated[editingServiceIndex] = { ...serviceForm };
+      setServicesList(updated);
+      saveServices(updated);
+      setEditingServiceIndex(null);
+      toast.success("Service updated!");
+    } else {
+      const updated = [...servicesList, { ...serviceForm }];
+      setServicesList(updated);
+      saveServices(updated);
+      setIsAddingService(false);
+      toast.success("Service added!");
+    }
+    setServiceForm({ icon: "layout", title: "", body: "" });
+  };
+
+  const handleDeleteServiceItem = (idx: number) => {
+    if (confirm("Are you sure you want to delete this service?")) {
+      const updated = servicesList.filter((_, i) => i !== idx);
+      setServicesList(updated);
+      saveServices(updated);
+      toast.success("Service removed.");
+    }
+  };
+
+  const bgStyleOptions: { value: SectionBgStyle; label: string }[] = [
+    { value: "bg-paper", label: "Warm Natural Paper" },
+    { value: "bg-graph", label: "Engineering Graph Paper" },
+    { value: "bg-ruled", label: "Ruled Notebook Paper (Red Margin)" },
+    { value: "bg-dots", label: "Dot Grid Paper" },
+    { value: "bg-hatch", label: "Diagonal Sketch Cross-Hatch" },
+    { value: "bg-sticky", label: "Sticky Note Tint (Canary Yellow)" },
+    { value: "bg-blueprint", label: "Blueprint Blue (Torn Paper Edge)" },
+    { value: "bg-dark-ink", label: "Dark Ink Notebook (Torn Paper Edge)" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header & Subtabs */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border/80 bg-card p-5">
+        <div>
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <Layers className="size-5 text-primary" /> Home Sections &amp; Content Management
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Reorder home sections, toggle visibility, customize titles/backgrounds, and edit hero/about/services content.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSaveAll}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+          >
+            <Save className="size-3.5" /> Save All Changes
+          </button>
+          <button
+            type="button"
+            onClick={handleResetToDefaults}
+            className="rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      {/* Subtab Selector */}
+      <div className="flex flex-wrap gap-2 border-b border-border/40 pb-2">
+        {[
+          { id: "sections", label: "1. Sections Order & Backgrounds", icon: Layers },
+          { id: "hero", label: "2. Hero Text & Badge", icon: Sparkles },
+          { id: "about", label: "3. About & Focus Points", icon: BookOpen },
+          { id: "services", label: "4. Services Capabilities", icon: Cpu },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setSubTab(tab.id as any)}
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all ${
+              subTab === tab.id
+                ? "bg-primary text-primary-foreground"
+                : "border border-border/50 bg-secondary/40 text-muted-foreground hover:text-foreground hover:bg-secondary"
+            }`}
+          >
+            <tab.icon className="size-3.5" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Subtab 1: Sections Order, Visibility & Backgrounds */}
+      {subTab === "sections" && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border/70 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300">
+            💡 <strong>Pro Tip:</strong> Reordering sections updates the live flow on the home page. Sections toggled <strong>Off</strong> are automatically hidden from the page, Navbar and Command Palette (⌘K).
+          </div>
+
+          <div className="space-y-3">
+            {config.sections.map((sec, idx) => (
+              <div
+                key={sec.id}
+                className={`rounded-2xl border p-4 transition-all ${
+                  sec.enabled
+                    ? "border-border/80 bg-card shadow-sm"
+                    : "border-border/40 bg-secondary/20 opacity-60"
+                }`}
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  {/* Left: Move buttons, Label, Status */}
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveSection(idx, -1)}
+                        className="grid size-6 place-items-center rounded border border-border bg-secondary/50 text-foreground hover:bg-secondary disabled:opacity-30"
+                        title="Move Up"
+                      >
+                        <ArrowUp className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === config.sections.length - 1}
+                        onClick={() => handleMoveSection(idx, 1)}
+                        className="grid size-6 place-items-center rounded border border-border bg-secondary/50 text-foreground hover:bg-secondary disabled:opacity-30"
+                        title="Move Down"
+                      >
+                        <ArrowDown className="size-3.5" />
+                      </button>
+                    </div>
+
+                    <span className="font-mono text-xs font-bold text-muted-foreground w-6">
+                      #{idx + 1}
+                    </span>
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground">{sec.label}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground">
+                          id: #{sec.id}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        Nav Label: {sec.navLabel || sec.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right: Controls (Visibility Toggle & Background style) */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Background Style Select */}
+                    <div className="flex items-center gap-1.5">
+                      <Palette className="size-3.5 text-muted-foreground" />
+                      <select
+                        value={sec.bgStyle || "bg-paper"}
+                        onChange={(e) => handleChangeBgStyle(sec.id, e.target.value as SectionBgStyle)}
+                        className="rounded-xl border border-border bg-secondary/40 px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                      >
+                        {bgStyleOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Enable / Disable Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSection(sec.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+                        sec.enabled
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                          : "border-slate-400 bg-slate-200/50 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {sec.enabled ? (
+                        <>
+                          <Check className="size-3" /> Visible (On)
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="size-3" /> Hidden (Off)
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Edit Section Heading & Description */}
+                <div className="mt-3 grid gap-2.5 border-t border-border/40 pt-3 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-muted-foreground mb-1">
+                      Eyebrow Tag
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. ABOUT ME & PHILOSOPHY"
+                      value={sec.eyebrow || ""}
+                      onChange={(e) => handleUpdateSectionDetails(sec.id, "eyebrow", e.target.value)}
+                      className="w-full rounded-lg border border-border bg-secondary/30 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-muted-foreground mb-1">
+                      Section Heading (Title)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Section Title"
+                      value={sec.title || ""}
+                      onChange={(e) => handleUpdateSectionDetails(sec.id, "title", e.target.value)}
+                      className="w-full rounded-lg border border-border bg-secondary/30 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-muted-foreground mb-1">
+                      Description / Subtitle
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Short description"
+                      value={sec.desc || ""}
+                      onChange={(e) => handleUpdateSectionDetails(sec.id, "desc", e.target.value)}
+                      className="w-full rounded-lg border border-border bg-secondary/30 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Subtab 2: Hero Content */}
+      {subTab === "hero" && (
+        <div className="rounded-2xl border border-border/80 bg-card p-6 space-y-4">
+          <h3 className="text-sm font-bold text-foreground">Edit Hero Banner Texts</h3>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">Display Name</label>
+              <input
+                type="text"
+                value={config.hero.name}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    hero: { ...prev.hero, name: e.target.value },
+                  }))
+                }
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Availability Badge / Stamp Text
+              </label>
+              <input
+                type="text"
+                value={config.hero.badgeText}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    hero: { ...prev.hero, badgeText: e.target.value },
+                  }))
+                }
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">Tagline</label>
+            <input
+              type="text"
+              value={config.hero.tagline}
+              onChange={(e) =>
+                setConfig((prev) => ({
+                  ...prev,
+                  hero: { ...prev.hero, tagline: e.target.value },
+                }))
+              }
+              className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">Intro Narrative</label>
+            <textarea
+              rows={3}
+              value={config.hero.intro}
+              onChange={(e) =>
+                setConfig((prev) => ({
+                  ...prev,
+                  hero: { ...prev.hero, intro: e.target.value },
+                }))
+              }
+              className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">Location</label>
+              <input
+                type="text"
+                value={config.hero.location}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    hero: { ...prev.hero, location: e.target.value },
+                  }))
+                }
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">Resume / CV Link</label>
+              <input
+                type="text"
+                value={config.hero.resumeUrl || ""}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    hero: { ...prev.hero, resumeUrl: e.target.value },
+                  }))
+                }
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSaveAll}
+            className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+          >
+            Save Hero Text
+          </button>
+        </div>
+      )}
+
+      {/* Subtab 3: About Content */}
+      {subTab === "about" && (
+        <div className="rounded-2xl border border-border/80 bg-card p-6 space-y-4">
+          <h3 className="text-sm font-bold text-foreground">Edit About Section &amp; Focus Points</h3>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">Section Title</label>
+              <input
+                type="text"
+                value={config.about.title}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    about: { ...prev.about, title: e.target.value },
+                  }))
+                }
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">Section Description</label>
+              <input
+                type="text"
+                value={config.about.desc}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    about: { ...prev.about, desc: e.target.value },
+                  }))
+                }
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">About Bio Paragraph</label>
+            <textarea
+              rows={3}
+              value={config.about.bioText}
+              onChange={(e) =>
+                setConfig((prev) => ({
+                  ...prev,
+                  about: { ...prev.about, bioText: e.target.value },
+                }))
+              }
+              className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          {/* Current Engineering Focus Points */}
+          <div className="space-y-2 border-t border-border/40 pt-4">
+            <label className="block text-xs font-semibold text-foreground">
+              Current Engineering Focus Points
+            </label>
+            <div className="space-y-2">
+              {config.about.focusPoints.map((pt, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={pt}
+                    onChange={(e) => {
+                      const updated = [...config.about.focusPoints];
+                      updated[idx] = e.target.value;
+                      setConfig((prev) => ({
+                        ...prev,
+                        about: { ...prev.about, focusPoints: updated },
+                      }));
+                    }}
+                    className="flex-1 rounded-xl border border-border bg-secondary/30 px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFocusPoint(idx)}
+                    className="grid size-7 place-items-center rounded-lg border border-rose-500/30 text-rose-500 hover:bg-rose-500/10"
+                    title="Remove item"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="text"
+                placeholder="Add new focus bullet point..."
+                value={newFocusPoint}
+                onChange={(e) => setNewFocusPoint(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddFocusPoint()}
+                className="flex-1 rounded-xl border border-border bg-secondary/30 px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddFocusPoint}
+                className="rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20"
+              >
+                + Add Point
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSaveAll}
+            className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+          >
+            Save About Text
+          </button>
+        </div>
+      )}
+
+      {/* Subtab 4: Services */}
+      {subTab === "services" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-foreground">Manage Services</h3>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingService(true);
+                setEditingServiceIndex(null);
+                setServiceForm({ icon: "layout", title: "", body: "" });
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="size-3.5" /> Add Service
+            </button>
+          </div>
+
+          {/* Add / Edit Service Form */}
+          {(isAddingService || editingServiceIndex !== null) && (
+            <form onSubmit={handleSaveServiceItem} className="rounded-2xl border border-primary/40 bg-card p-5 space-y-3">
+              <h4 className="text-xs font-bold text-primary">
+                {editingServiceIndex !== null ? "Edit Service" : "Add New Service"}
+              </h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">Service Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Full-Stack Web Development"
+                    value={serviceForm.title}
+                    onChange={(e) => setServiceForm({ ...serviceForm, title: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">Icon Identifier</label>
+                  <select
+                    value={serviceForm.icon}
+                    onChange={(e) => setServiceForm({ ...serviceForm, icon: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="layout">Layout / Web</option>
+                    <option value="server">Server / Backend</option>
+                    <option value="code">Code / Software</option>
+                    <option value="sparkles">Sparkles / Frontend</option>
+                    <option value="palette">Palette / UI UX</option>
+                    <option value="brain">Brain / Problem Solving</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Description</label>
+                <textarea
+                  rows={2}
+                  placeholder="Describe what you provide..."
+                  value={serviceForm.body}
+                  onChange={(e) => setServiceForm({ ...serviceForm, body: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  {editingServiceIndex !== null ? "Update Service" : "Save Service"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingService(false);
+                    setEditingServiceIndex(null);
+                  }}
+                  className="rounded-xl border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Existing Services List */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {servicesList.map((s, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-xs font-bold text-primary">0{idx + 1}</span>
+                    <span className="text-[10px] rounded bg-secondary px-2 py-0.5 text-muted-foreground font-mono">
+                      {s.icon}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-foreground">{s.title}</h4>
+                  <p className="mt-1 text-xs text-muted-foreground line-clamp-3">{s.body}</p>
+                </div>
+
+                <div className="mt-4 flex items-center justify-end gap-2 border-t border-border/40 pt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingServiceIndex(idx);
+                      setServiceForm({ icon: s.icon, title: s.title, body: s.body });
+                      setIsAddingService(false);
+                    }}
+                    className="grid size-7 place-items-center rounded-lg border border-border text-foreground hover:bg-secondary"
+                    title="Edit"
+                  >
+                    <Edit className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteServiceItem(idx)}
+                    className="grid size-7 place-items-center rounded-lg border border-rose-500/30 text-rose-500 hover:bg-rose-500/10"
+                    title="Delete"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   12. ACHIEVEMENT POPUPS MANAGER
+   ========================================================= */
+function AchievementPopupsManager() {
+  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
+  const [settings, setSettings] = useState<AchievementSettings>(getAchievementSettings());
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [form, setForm] = useState<{
+    title: string;
+    shortMessage: string;
+    type: "Competition" | "Certificate" | "Award" | "Other";
+    iconType: "trophy" | "certificate" | "medal" | "star";
+    stampText: string;
+    image: string;
+    date: string;
+    issuer: string;
+    details: string;
+    link: string;
+    enabled: boolean;
+  }>({
+    title: "",
+    shortMessage: "",
+    type: "Certificate",
+    iconType: "certificate",
+    stampText: "VERIFIED",
+    image: "",
+    date: "2026",
+    issuer: "",
+    details: "",
+    link: "",
+    enabled: true,
+  });
+
+  const loadAchievements = () => {
+    getAchievements().then(setAchievements);
+    setSettings(getAchievementSettings());
+  };
+
+  useEffect(() => {
+    loadAchievements();
+  }, []);
+
+  const handleGlobalSettingsSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveAchievementSettings(settings);
+    toast.success("Achievement popup global settings updated!");
+  };
+
+  const handleMoveAchievement = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= achievements.length) return;
+    const reordered = [...achievements];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(target, 0, moved);
+    reorderAchievements(reordered).then(setAchievements);
+    toast.success("Order updated!");
+  };
+
+  const handleToggleCard = (item: AchievementItem) => {
+    saveAchievement({ ...item, enabled: !item.enabled }).then(setAchievements);
+  };
+
+  const handleEditClick = (item: AchievementItem) => {
+    setEditingId(item.id);
+    setForm({
+      title: item.title,
+      shortMessage: item.shortMessage,
+      type: item.type,
+      iconType: item.iconType || (item.type === "Competition" ? "trophy" : item.type === "Certificate" ? "certificate" : item.type === "Award" ? "medal" : "star"),
+      stampText: item.stampText || "",
+      image: item.image || "",
+      date: item.date,
+      issuer: item.issuer,
+      details: item.details,
+      link: item.link || "",
+      enabled: item.enabled,
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    if (confirm("Delete this achievement card?")) {
+      deleteAchievement(id).then(setAchievements);
+      toast.success("Achievement card removed.");
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      if (ev.target?.result) {
+        const compressed = await ensureCompactImage(ev.target.result as string, 600, 600, 0.85);
+        setForm((prev) => ({ ...prev, image: compressed }));
+        toast.success("Image uploaded & compressed!");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveCard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim() || !form.shortMessage.trim() || !form.issuer.trim()) {
+      toast.error("Please fill in Title, Short Message, and Issuer.");
+      return;
+    }
+
+    const payload: AchievementItem = {
+      id: editingId || `ach-${Date.now()}`,
+      title: form.title.trim(),
+      shortMessage: form.shortMessage.trim(),
+      type: form.type,
+      iconType: form.iconType,
+      stampText: form.stampText.trim(),
+      image: form.image.trim(),
+      date: form.date.trim(),
+      issuer: form.issuer.trim(),
+      details: form.details.trim(),
+      link: form.link.trim(),
+      enabled: form.enabled,
+      sortOrder: achievements.length + 1,
+    };
+
+    await saveAchievement(payload);
+    loadAchievements();
+    setIsFormOpen(false);
+    setEditingId(null);
+    setForm({
+      title: "",
+      shortMessage: "",
+      type: "Certificate",
+      iconType: "certificate",
+      stampText: "VERIFIED",
+      image: "",
+      date: "2026",
+      issuer: "",
+      details: "",
+      link: "",
+      enabled: true,
+    });
+    toast.success("Achievement card saved live!");
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Global Popup Setting Card */}
+      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <Trophy className="size-4 text-amber-500" /> Achievement Popups: Global Settings
+        </h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Control display duration, start delay, and toggle the sequential achievement popup on the home page.
+        </p>
+
+        <form onSubmit={handleGlobalSettingsSave} className="mt-4 grid gap-4 sm:grid-cols-5 items-end">
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Enable Popups
+            </label>
+            <button
+              type="button"
+              onClick={() => setSettings((s) => ({ ...s, enabled: !s.enabled }))}
+              className={`w-full rounded-xl border py-2 text-xs font-bold transition-all ${
+                settings.enabled
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600"
+                  : "border-slate-300 bg-slate-100 text-slate-600"
+              }`}
+            >
+              {settings.enabled ? "✓ Enabled (Active)" : "✕ Disabled (Muted)"}
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Popup Sound
+            </label>
+            <button
+              type="button"
+              onClick={() => setSettings((s) => ({ ...s, soundEnabled: !s.soundEnabled }))}
+              className={`w-full rounded-xl border py-2 text-xs font-bold transition-all ${
+                settings.soundEnabled
+                  ? "border-amber-500/40 bg-amber-500/10 text-amber-600"
+                  : "border-slate-300 bg-slate-100 text-slate-600"
+              }`}
+            >
+              {settings.soundEnabled ? "🔊 Sound ON" : "🔇 Sound Muted"}
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Card Duration (Seconds)
+            </label>
+            <input
+              type="number"
+              min="2"
+              max="30"
+              value={settings.durationSeconds}
+              onChange={(e) =>
+                setSettings((s) => ({ ...s, durationSeconds: Number(e.target.value) || 6 }))
+              }
+              className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Start Delay (Seconds)
+            </label>
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              max="20"
+              value={settings.startDelaySeconds}
+              onChange={(e) =>
+                setSettings((s) => ({ ...s, startDelaySeconds: Number(e.target.value) || 2.5 }))
+              }
+              className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-primary py-2 text-xs font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
+            >
+              Save Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Main Grid: Form / Live Preview + Cards List */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        {/* Left: Card Editor Form */}
+        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-border/40 pb-3">
+            <h4 className="text-sm font-bold text-foreground">
+              {editingId ? "Edit Achievement Card" : "Add New Achievement Card"}
+            </h4>
+            {editingId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId(null);
+                  setForm({
+                    title: "",
+                    shortMessage: "",
+                    type: "Certificate",
+                    iconType: "certificate",
+                    stampText: "VERIFIED",
+                    image: "",
+                    date: "2026",
+                    issuer: "",
+                    details: "",
+                    link: "",
+                    enabled: true,
+                  });
+                }}
+                className="text-xs text-muted-foreground hover:underline"
+              >
+                Reset form
+              </button>
+            )}
+          </div>
+
+          <form onSubmit={handleSaveCard} className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">Title</label>
+              <input
+                type="text"
+                placeholder="e.g. SUST CSE Carnival 2026 — 6th Place"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                required
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Short Message (Displayed on the popup card)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 6th place out of 700+ teams in 24-hr onsite national hackathon!"
+                value={form.shortMessage}
+                onChange={(e) => setForm({ ...form, shortMessage: e.target.value })}
+                required
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Type</label>
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value as any })}
+                  className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                >
+                  <option value="Competition">Competition</option>
+                  <option value="Certificate">Certificate</option>
+                  <option value="Award">Award</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Date / Year</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Jul 2026 or 2025"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Issuer / Org</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Programming Hero"
+                  value={form.issuer}
+                  onChange={(e) => setForm({ ...form, issuer: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Custom SVG Icon & Handwritten Stamp Inputs */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">
+                  Hand-Drawn SVG Icon
+                </label>
+                <select
+                  value={form.iconType}
+                  onChange={(e) => setForm({ ...form, iconType: e.target.value as any })}
+                  className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                >
+                  <option value="trophy">🏆 Hand-Drawn Trophy</option>
+                  <option value="certificate">📜 Hand-Drawn Certificate Scroll</option>
+                  <option value="medal">🏅 Hand-Drawn Medal</option>
+                  <option value="star">⭐ Hand-Drawn Star</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">
+                  Handwritten Stamp Text
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 6th!, VERIFIED, TOP 300, FINALIST"
+                  value={form.stampText}
+                  onChange={(e) => setForm({ ...form, stampText: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Image (Upload or URL) */}
+            <div className="rounded-xl border border-border/70 bg-secondary/20 p-3 space-y-2">
+              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Certificate / Trophy Image</span>
+                {form.image && (
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image: "" })}
+                    className="text-[10px] text-rose-500 hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+              </label>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Paste image URL (or upload below)"
+                  value={form.image.startsWith("data:") ? "[Uploaded Image File]" : form.image}
+                  onChange={(e) => {
+                    if (!form.image.startsWith("data:")) {
+                      setForm({ ...form, image: e.target.value });
+                    }
+                  }}
+                  className="flex-1 rounded-xl border border-border bg-secondary/40 px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                />
+                <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 shrink-0">
+                  <Upload className="size-3" />
+                  <span>Upload</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Full Milestone Details (Displayed in modal)
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Detailed description of what you accomplished..."
+                value={form.details}
+                onChange={(e) => setForm({ ...form, details: e.target.value })}
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Verification / Credential URL (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="https://..."
+                value={form.link}
+                onChange={(e) => setForm({ ...form, link: e.target.value })}
+                className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="ach-enabled"
+                checked={form.enabled}
+                onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
+                className="size-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <label htmlFor="ach-enabled" className="text-xs font-semibold text-foreground cursor-pointer">
+                Enabled (Show in sequential popup)
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
+            >
+              {editingId ? "Update Achievement Card" : "Add Achievement Card"}
+            </button>
+          </form>
+        </div>
+
+        {/* Right: Live Preview & Cards Management */}
+        <div className="space-y-4">
+          {/* Live Preview Sticky Card */}
+          <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Eye className="size-3.5 text-primary" /> Live Popup Preview
+            </h4>
+
+            <div className="p-4 bg-[#fbf9f4] rounded-xl border border-dashed border-slate-300 flex items-center justify-center">
+              <div className="w-full max-w-xs relative rounded-lg border-2 border-slate-900 bg-[#fffdf5] p-3.5 shadow-[4px_4px_0px_#0f172a] rotate-[-1deg]">
+                {/* Tape */}
+                <div
+                  aria-hidden
+                  className="absolute -top-2 left-1/2 h-4 w-16 -translate-x-1/2 rotate-1 bg-amber-200/90 border border-amber-400 shadow-xs"
+                />
+
+                <div className="mb-2 flex items-center justify-between gap-1">
+                  <span className="rounded border border-slate-900 bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase text-slate-900">
+                    {form.type || "Certificate"}
+                  </span>
+                  <span className="font-mono text-[9px] text-slate-500 font-bold">[1/4]</span>
+                  <span className="grid size-5 place-items-center rounded border border-slate-900 bg-white text-slate-700">
+                    <X className="size-3" />
+                  </span>
+                </div>
+
+                <h5 className="text-xs font-bold text-slate-900 line-clamp-1">
+                  {form.title || "SUST CSE Carnival 2026 — 6th Place"}
+                </h5>
+                <p className="mt-1 text-[11px] text-slate-600 line-clamp-2">
+                  {form.shortMessage || "6th place out of 700+ teams in 24-hr onsite national hackathon!"}
+                </p>
+
+                <div className="mt-2.5 flex items-center justify-between border-t border-dashed border-slate-300 pt-1.5 text-[10px] text-slate-600">
+                  <span className="font-hand text-xs font-bold truncate max-w-[150px]">
+                    {form.issuer || "Shahjalal University"}
+                  </span>
+                  <span className="font-mono text-[9px] font-bold text-slate-500">
+                    {form.date || "2026"}
+                  </span>
+                </div>
+
+                <div className="mt-1 text-[9px] font-bold text-primary">Click for details ↗</div>
+
+                <div className="absolute bottom-0 inset-x-0 h-1 bg-slate-200">
+                  <div className="h-full bg-primary w-2/3" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Existing Cards List */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Existing Cards ({achievements.length})
+            </h4>
+
+            {achievements.map((item, idx) => (
+              <div
+                key={item.id}
+                className={`rounded-2xl border p-3.5 transition-all ${
+                  item.enabled
+                    ? "border-border/80 bg-card shadow-sm"
+                    : "border-border/40 bg-secondary/20 opacity-60"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveAchievement(idx, -1)}
+                        className="grid size-5 place-items-center rounded border border-border bg-secondary/50 text-foreground hover:bg-secondary disabled:opacity-30"
+                      >
+                        <ArrowUp className="size-3" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === achievements.length - 1}
+                        onClick={() => handleMoveAchievement(idx, 1)}
+                        className="grid size-5 place-items-center rounded border border-border bg-secondary/50 text-foreground hover:bg-secondary disabled:opacity-30"
+                      >
+                        <ArrowDown className="size-3" />
+                      </button>
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+                          {item.type}
+                        </span>
+                        <span className="font-bold text-xs text-foreground truncate">
+                          {item.title}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                        {item.shortMessage}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCard(item)}
+                      className={`rounded-lg border px-2 py-1 text-[10px] font-bold ${
+                        item.enabled
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600"
+                          : "border-slate-300 bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {item.enabled ? "On" : "Off"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleEditClick(item)}
+                      className="grid size-7 place-items-center rounded-lg border border-border text-foreground hover:bg-secondary"
+                      title="Edit"
+                    >
+                      <Edit className="size-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClick(item.id)}
+                      className="grid size-7 place-items-center rounded-lg border border-rose-500/30 text-rose-500 hover:bg-rose-500/10"
+                      title="Delete"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

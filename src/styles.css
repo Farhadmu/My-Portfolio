@@ -5,18 +5,20 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system — "Neural Dark" futuristic portfolio.
- * All colors are oklch semantic tokens. Never hardcode colors in components.
+ * Design system — "Raw Notebook / Workshop" aesthetic.
+ * Paper textures, deep ink typography, biro-blue primary, red-pen accent,
+ * highlighter-yellow notes, 2px borders, hard offset shadows, zero AI glow/glass.
  */
 
 @theme inline {
   --breakpoint-xs: 23rem;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --radius-3xl: 18px;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -31,63 +33,109 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-violet: var(--violet);
-  --color-cyan: var(--cyan);
-  --color-lime: var(--lime);
-  --color-amber: var(--amber);
-  --color-pink: var(--pink);
+
+  /* Deep ink tones for high contrast and readability on paper */
+  --color-emerald-400: #047857;
+  --color-cyan-400: #0369a1;
+  --color-rose-400: #be123c;
+  --color-violet-400: #6d28d9;
+  --color-amber-400: #b45309;
+  --color-lime-400: #3f6212;
+  --color-pink-400: #be185d;
+  --color-sky-400: #0284c7;
+
+  --color-violet: #6d28d9;
+  --color-cyan: #0284c7;
+  --color-lime: #4d7c0f;
+  --color-amber: #b45309;
+  --color-pink: #be185d;
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-hand: "Caveat", cursive, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 :root {
-  --radius: 0.9rem;
-  --background: oklch(0.14 0.025 265);
-  --foreground: oklch(0.96 0.008 250);
-  --card: oklch(0.19 0.03 265);
-  --card-foreground: oklch(0.96 0.008 250);
-  --popover: oklch(0.17 0.03 265);
-  --popover-foreground: oklch(0.96 0.008 250);
-  --primary: oklch(0.78 0.16 200);
-  --primary-foreground: oklch(0.15 0.03 265);
-  --secondary: oklch(0.24 0.035 268);
-  --secondary-foreground: oklch(0.95 0.008 250);
-  --muted: oklch(0.24 0.03 268);
-  --muted-foreground: oklch(0.7 0.025 260);
-  --accent: oklch(0.66 0.2 300);
-  --accent-foreground: oklch(0.97 0.01 250);
-  --violet: oklch(0.66 0.2 300);
-  --cyan: oklch(0.82 0.15 199);
-  --lime: oklch(0.83 0.18 152);
-  --amber: oklch(0.83 0.15 78);
-  --pink: oklch(0.74 0.18 350);
-  --destructive: oklch(0.63 0.22 25);
-  --destructive-foreground: oklch(0.98 0.01 250);
-  --border: oklch(0.32 0.035 268 / 60%);
-  --input: oklch(0.3 0.035 268 / 70%);
-  --ring: oklch(0.78 0.16 200);
+  --radius: 8px;
+  /* Paper tone */
+  --background: #fbf9f4;
+  /* Deep ink-navy */
+  --foreground: #0f172a;
+  /* Crisp sheet */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  /* Biro blue primary */
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+  /* Warm craft paper secondary */
+  --secondary: #f3ede2;
+  --secondary-foreground: #0f172a;
+  /* Slate pencil muted */
+  --muted: #ebe5d8;
+  --muted-foreground: #475569;
+  /* Red-pen accent */
+  --accent: #dc2626;
+  --accent-foreground: #ffffff;
+  /* Highlighter yellow */
+  --highlighter: #fef08a;
 
-  --gradient-brand: linear-gradient(120deg, var(--cyan), var(--violet) 55%, var(--pink));
-  --gradient-surface: linear-gradient(
-    160deg,
-    color-mix(in oklab, var(--card) 92%, transparent),
-    color-mix(in oklab, var(--background) 88%, transparent)
-  );
-  --glow-cyan: 0 0 0 1px color-mix(in oklab, var(--cyan) 30%, transparent),
-    0 18px 60px -18px color-mix(in oklab, var(--cyan) 55%, transparent);
-  --glow-violet: 0 0 0 1px color-mix(in oklab, var(--violet) 30%, transparent),
-    0 18px 60px -18px color-mix(in oklab, var(--violet) 55%, transparent);
-  --shadow-depth: 0 30px 80px -40px oklch(0 0 0 / 90%);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  /* Thick 2px ink border */
+  --border: #0f172a;
+  --input: #0f172a;
+  --ring: #1d4ed8;
+
+  /* Hard offset shadows */
+  --shadow-hard: 3px 3px 0px #0f172a;
+  --shadow-hard-sm: 2px 2px 0px #0f172a;
+  --shadow-hard-lg: 5px 5px 0px #0f172a;
+  --shadow-hard-xl: 7px 7px 0px #0f172a;
 }
 
 .dark {
-  color-scheme: dark;
+  --radius: 8px;
+  /* Deep Chalkboard Slate */
+  --background: #141b24;
+  /* Crisp Chalk White */
+  --foreground: #f1f5f9;
+  /* Chalkboard Card / Panel */
+  --card: #1c2431;
+  --card-foreground: #f8fafc;
+  --popover: #1c2431;
+  --popover-foreground: #f8fafc;
+  /* Chalk Blue */
+  --primary: #60a5fa;
+  --primary-foreground: #0b1119;
+  /* Dusty Slate Secondary */
+  --secondary: #242e3f;
+  --secondary-foreground: #f1f5f9;
+  /* Chalk Slate Muted */
+  --muted: #222c3c;
+  --muted-foreground: #94a3b8;
+  /* Chalk Red Accent */
+  --accent: #f87171;
+  --accent-foreground: #0b1119;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  /* Dusty Chalk Border */
+  --border: #475569;
+  --input: #475569;
+  --ring: #60a5fa;
+
+  /* Hard offset shadows in dark mode */
+  --shadow-hard: 3px 3px 0px #090d13;
+  --shadow-hard-sm: 2px 2px 0px #090d13;
+  --shadow-hard-lg: 5px 5px 0px #090d13;
+  --shadow-hard-xl: 7px 7px 0px #090d13;
 }
 
 @layer base {
@@ -100,6 +148,7 @@
     scroll-padding-top: 5.5rem;
     overflow-x: hidden;
     max-width: 100%;
+    background-color: var(--background);
   }
 
   body {
@@ -111,57 +160,339 @@
     max-width: 100%;
   }
 
+  /* Button Stamp Press Effect */
+  button:active:not(:disabled),
+  .stamp-press:active:not(:disabled) {
+    transform: translate(2px, 2px) scale(0.985);
+    box-shadow: 1px 1px 0px var(--border);
+    transition: transform 0.05s ease, box-shadow 0.05s ease;
+  }
+
+  /* Hand-drawn Link Hover Effect */
+  a.hand-link {
+    position: relative;
+    text-decoration: none;
+  }
+  a.hand-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 2px;
+    background-color: currentColor;
+    opacity: 0.75;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.22s ease-out;
+  }
+  a.hand-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
   ::selection {
-    background: color-mix(in oklab, var(--cyan) 35%, transparent);
+    background: #fef08a;
+    color: #0f172a;
   }
 
   ::-webkit-scrollbar {
-    width: 9px;
+    width: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: var(--background);
+    background: var(--muted);
+    border-left: 1px solid var(--border);
   }
   ::-webkit-scrollbar-thumb {
-    background: color-mix(in oklab, var(--cyan) 40%, var(--muted));
-    border-radius: 99px;
+    background: var(--primary);
+    border: 2px solid var(--border);
+    border-radius: 4px;
   }
+}
+
+/* Handwritten font utility */
+.font-hand {
+  font-family: var(--font-hand);
+}
+
+/* Raw panel / card replacing glass & dark gradient */
+@utility panel {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background-color: var(--card);
+  border: 2px solid #0f172a;
+  box-shadow: var(--shadow-hard);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 @utility glass {
-  background: color-mix(in oklab, var(--card) 55%, transparent);
-  backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid color-mix(in oklab, var(--border) 90%, transparent);
+  background-color: var(--card);
+  border: 2px solid #0f172a;
+  box-shadow: var(--shadow-hard-sm);
 }
 
-@utility panel {
-  position: relative;
-  border-radius: var(--radius-2xl);
-  background: var(--gradient-surface);
-  border: 1px solid color-mix(in oklab, var(--border) 90%, transparent);
-  box-shadow: var(--shadow-depth);
+@utility hard-shadow {
+  box-shadow: var(--shadow-hard);
 }
 
-@utility glow-cyan {
-  box-shadow: var(--glow-cyan);
+@utility hard-shadow-sm {
+  box-shadow: var(--shadow-hard-sm);
 }
 
-@utility glow-violet {
-  box-shadow: var(--glow-violet);
+@utility hard-shadow-lg {
+  box-shadow: var(--shadow-hard-lg);
 }
 
+@utility hard-button {
+  border: 2px solid #0f172a;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard-sm);
+  transition: all 0.12s ease;
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-hard);
+  }
+  &:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #0f172a;
+  }
+}
+
+/* Replaced AI text gradient with solid ink / highlighter emphasis */
 @utility text-gradient {
-  background: var(--gradient-brand);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--foreground);
+  font-weight: 800;
 }
 
-@utility grid-bg {
+/* Hand-drawn scribble / sketch underline */
+.sketch-underline {
+  position: relative;
+  display: inline-block;
+}
+.sketch-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 3px;
+  background-color: #1d4ed8;
+  border-radius: 2px;
+  transform: rotate(-0.6deg);
+}
+
+.sketch-underline-red::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 3px;
+  background-color: #dc2626;
+  border-radius: 2px;
+  transform: rotate(0.8deg);
+}
+
+/* Distinct Section Backgrounds */
+
+/* 1. Natural Paper */
+.bg-paper {
+  background-color: #fbf9f4;
+}
+
+/* 2. Engineering Graph Paper */
+.bg-graph {
+  background-color: #fcfbfa;
   background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--cyan) 9%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--cyan) 9%, transparent) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black, transparent 75%);
+    linear-gradient(to right, rgba(29, 78, 216, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(29, 78, 216, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* 3. Ruled Notebook with Red Margin Line */
+.bg-ruled {
+  background-color: #fdfcf9;
+  background-image:
+    linear-gradient(90deg, transparent 48px, rgba(220, 38, 38, 0.28) 48px, rgba(220, 38, 38, 0.28) 50px, transparent 50px),
+    linear-gradient(rgba(148, 163, 184, 0.3) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 28px;
+}
+
+/* 4. Dot Grid Paper */
+.bg-dots {
+  background-color: #fbf9f4;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.18) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+
+/* 5. Diagonal Sketch Cross-Hatch */
+.bg-hatch {
+  background-color: #faf7f0;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(15, 23, 42, 0.04),
+    rgba(15, 23, 42, 0.04) 1px,
+    transparent 1px,
+    transparent 12px
+  );
+}
+
+/* 6. Sticky Note Tint */
+.bg-sticky {
+  background-color: #fefce8;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* 7. Blueprint Blue */
+.bg-blueprint {
+  background-color: #16325c;
+  color: #f8fafc;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.14) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+}
+.bg-blueprint h1,
+.bg-blueprint h2,
+.bg-blueprint h3,
+.bg-blueprint h4,
+.bg-blueprint p,
+.bg-blueprint span {
+  color: inherit;
+}
+.bg-blueprint .panel {
+  background-color: #1e4175;
+  border-color: #93c5fd;
+  color: #ffffff;
+  box-shadow: 3px 3px 0px #0b1e38;
+}
+
+/* 8. Dark Ink Notebook */
+.bg-dark-ink {
+  background-color: #0b1424;
+  color: #f8fafc;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.bg-dark-ink h1,
+.bg-dark-ink h2,
+.bg-dark-ink h3,
+.bg-dark-ink h4,
+.bg-dark-ink p,
+.bg-dark-ink span {
+  color: inherit;
+}
+.bg-dark-ink .panel {
+  background-color: #132038;
+  border-color: #e2e8f0;
+  color: #ffffff;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+/* Torn-paper divider edges */
+.torn-edge-top {
+  position: relative;
+}
+.torn-edge-top::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background-image: radial-gradient(circle at 10px 10px, transparent 10px, #fbf9f4 11px);
+  background-size: 20px 10px;
+  background-repeat: repeat-x;
+  z-index: 10;
+}
+
+.torn-edge-bottom {
+  position: relative;
+}
+.torn-edge-bottom::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background-image: radial-gradient(circle at 10px 0px, transparent 10px, #fbf9f4 11px);
+  background-size: 20px 10px;
+  background-repeat: repeat-x;
+  z-index: 10;
+}
+
+/* Washi / Masking Tape Sticker */
+.tape-top {
+  position: relative;
+}
+.tape-top::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1deg);
+  width: 90px;
+  height: 22px;
+  background: rgba(254, 240, 138, 0.75);
+  border: 1px dashed rgba(202, 138, 4, 0.4);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+}
+
+.tape-corner {
+  position: relative;
+}
+.tape-corner::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  transform: rotate(35deg);
+  width: 60px;
+  height: 18px;
+  background: rgba(254, 240, 138, 0.85);
+  border: 1px dashed rgba(202, 138, 4, 0.5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  z-index: 20;
+}
+
+/* Polaroid Photo Frame */
+.polaroid {
+  background: #ffffff;
+  padding: 12px 12px 28px 12px;
+  border: 2px solid #0f172a;
+  box-shadow: var(--shadow-hard-lg);
+  border-radius: 4px;
+}
+
+/* Sticker badge */
+.sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 2px solid #0f172a;
+  border-radius: 9999px;
+  box-shadow: 2px 2px 0px #0f172a;
+}
+
+/* Highlighter mark */
+.highlight-yellow {
+  background: linear-gradient(180deg, transparent 55%, #fef08a 55%);
+}
+
+.highlight-pink {
+  background: linear-gradient(180deg, transparent 55%, #fbcfe8 55%);
+}
+
+.highlight-cyan {
+  background: linear-gradient(180deg, transparent 55%, #bae6fd 55%);
 }
 
 @utility mono {
@@ -169,53 +500,97 @@
   font-variant-ligatures: none;
 }
 
-@keyframes float-y {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
+@utility grid-bg {
+  background-color: #fcfbfa;
+  background-image:
+    linear-gradient(to right, rgba(29, 78, 216, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(29, 78, 216, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Chalkboard Dark Theme Overrides for Distinct Backgrounds */
+.dark .bg-paper {
+  background-color: #141b24;
+}
+
+.dark .bg-graph {
+  background-color: #141b24;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+}
+
+.dark .bg-ruled {
+  background-color: #161e29;
+  background-image:
+    linear-gradient(90deg, transparent 48px, rgba(248, 113, 113, 0.3) 48px, rgba(248, 113, 113, 0.3) 50px, transparent 50px),
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+}
+
+.dark .bg-dots {
+  background-color: #141b24;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.2px, transparent 1.2px);
+}
+
+.dark .bg-hatch {
+  background-color: #151c27;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.04) 1px,
+    transparent 1px,
+    transparent 12px
+  );
+}
+
+.dark .bg-sticky {
+  background-color: #242217;
+  background-image: radial-gradient(rgba(254, 240, 138, 0.12) 1px, transparent 1px);
+}
+
+.dark .polaroid {
+  background-color: #1c2431;
+  border-color: #64748b;
+  color: #f1f5f9;
+}
+
+.dark .tape-top::before,
+.dark .tape-corner::before {
+  background: rgba(234, 179, 8, 0.35);
+  border-color: rgba(234, 179, 8, 0.5);
+}
+
+/* SVG Stroke Drawing Animation for Headings & Hero Underline */
+.stroke-draw {
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation: drawStroke 0.85s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+@keyframes drawStroke {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
-@keyframes sweep {
-  0% {
-    transform: translateX(-120%);
-  }
-  100% {
-    transform: translateX(220%);
-  }
+/* Rubber Stamp Slam Animation for Certificates */
+.stamp-slam {
+  animation: stampSlam 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-@keyframes pulse-ring {
+@keyframes stampSlam {
   0% {
-    opacity: 0.6;
-    transform: scale(0.9);
-  }
-  100% {
     opacity: 0;
-    transform: scale(1.6);
+    transform: scale(2.4) rotate(-18deg);
   }
-}
-
-@keyframes blink {
-  0%,
-  49% {
+  65% {
     opacity: 1;
+    transform: scale(0.95) rotate(4deg);
   }
-  50%,
   100% {
-    opacity: 0;
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
   }
-}
-
-@utility float-slow {
-  animation: float-y 7s ease-in-out infinite;
-}
-
-@utility caret {
-  animation: blink 1s step-end infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -226,5 +601,14 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+  .stroke-draw {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+  .stamp-slam {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

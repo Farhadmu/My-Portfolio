@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Download, FileText, Home, Mail, Rss, Lock } from "lucide-react";
 import { navSections, profile } from "@/data/portfolio";
 import { GithubIcon, LinkedinIcon } from "./BrandIcons";
+import { useHomeSectionsConfig } from "@/hooks/usePortfolioData";
 import {
   CommandDialog,
   CommandEmpty,
@@ -15,6 +16,7 @@ import {
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
+  const homeSections = useHomeSectionsConfig();
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -39,10 +41,14 @@ export function CommandPalette() {
     if (url) window.open(url, "_blank", "noreferrer");
   };
 
-  // Dedupe nav sections (Experience & Hackathon share an id) for the palette list.
-  const uniqueSections = navSections.filter(
-    (s, i) => navSections.findIndex((x) => x.id === s.id) === i,
+  // Dedupe nav sections and filter out disabled ones
+  const enabledIds = new Set(
+    homeSections.sections.filter((s) => s.enabled).map((s) => s.id)
   );
+
+  const uniqueSections = navSections
+    .filter((s, i) => navSections.findIndex((x) => x.id === s.id) === i)
+    .filter((s) => enabledIds.has(s.id));
 
   return (
     <>
@@ -51,10 +57,10 @@ export function CommandPalette() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Open command palette"
-          className="glass mono flex items-center gap-2 rounded-full border border-border px-3.5 py-2 text-[11px] text-muted-foreground shadow-[var(--shadow-depth)] transition-all hover:border-primary/40 hover:text-primary hover:scale-105"
+          className="flex items-center gap-2 rounded-md border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-[11px] font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#0f172a]"
         >
-          <span>Quick nav</span>
-          <kbd className="mono rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[10px]">
+          <span>⌘ Quick Nav</span>
+          <kbd className="rounded border border-slate-900 bg-[#fef08a] px-1.5 py-0.5 text-[10px] text-slate-900 font-bold">
             ⌘K
           </kbd>
         </button>
@@ -63,7 +69,7 @@ export function CommandPalette() {
           href="/admin"
           aria-label="Admin CMS Login"
           title="Admin CMS Login (/admin)"
-          className="glass mono flex size-8 items-center justify-center rounded-full border border-border text-muted-foreground shadow-[var(--shadow-depth)] transition-all hover:border-primary/40 hover:text-primary hover:scale-105"
+          className="flex size-8 items-center justify-center rounded-md border-2 border-slate-900 bg-white text-slate-800 shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-y-0.5 hover:bg-slate-50"
         >
           <Lock className="size-3.5" />
         </a>
@@ -109,47 +115,28 @@ export function CommandPalette() {
             <CommandItem
               onSelect={() => {
                 setOpen(false);
-                window.dispatchEvent(new CustomEvent("open_message_modal"));
-              }}
-            >
-              <Mail />
-              <span>Send Direct Message (To Farhad's Dashboard)</span>
-              <CommandShortcut>Msg</CommandShortcut>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpen(false);
                 window.dispatchEvent(new CustomEvent("open_resume_modal"));
               }}
             >
-              <FileText />
-              <span>Interactive Resume Preview (In-Site)</span>
-              <CommandShortcut>Resume</CommandShortcut>
+              <Download />
+              <span>View Interactive CV</span>
             </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                go("guestbook");
-              }}
-            >
-              <FileText />
-              <span>Community Guestbook & Endorsements</span>
-            </CommandItem>
+          </CommandGroup>
+
+          <CommandSeparator />
+
+          <CommandGroup heading="Connect & Social">
             <CommandItem onSelect={() => openExternal(profile.github)}>
               <GithubIcon className="size-4" />
               <span>GitHub Profile</span>
-              <CommandShortcut>{profile.githubUser}</CommandShortcut>
             </CommandItem>
             <CommandItem onSelect={() => openExternal(profile.linkedin)}>
               <LinkedinIcon className="size-4" />
-              <span>LinkedIn Profile</span>
-            </CommandItem>
-            <CommandItem onSelect={() => openExternal(profile.resume)}>
-              <Download />
-              <span>Download Resume (PDF)</span>
+              <span>LinkedIn</span>
             </CommandItem>
             <CommandItem onSelect={() => openExternal(`mailto:${profile.email}`)}>
               <Mail />
-              <span>Email {profile.shortName}</span>
+              <span>Send an Email</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>

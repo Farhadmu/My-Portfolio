@@ -1,19 +1,31 @@
 import { useEffect, useState } from "react";
-import { Eye, Menu, X, Volume2, VolumeX, FileText, Sparkles, Lock } from "lucide-react";
+import { Menu, X, Volume2, VolumeX, FileText, Sun, Moon } from "lucide-react";
 import { navSections, profile } from "@/data/portfolio";
 import { Magnetic } from "./Magnetic";
 import { isSoundEnabled, setSoundEnabled, sound } from "@/lib/sound";
-import { useProfileConfig } from "@/hooks/usePortfolioData";
+import { useHomeSectionsConfig, useProfileConfig } from "@/hooks/usePortfolioData";
 
 export function Navbar() {
   const profileConfig = useProfileConfig();
+  const homeSections = useHomeSectionsConfig();
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("home");
   const [open, setOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  // Filter out hidden sections
+  const enabledIds = new Set(
+    homeSections.sections.filter((s) => s.enabled).map((s) => s.id)
+  );
+  const filteredNavSections = navSections.filter((s) => enabledIds.has(s.id));
+  const isGuestbookEnabled = enabledIds.has("guestbook");
 
   useEffect(() => {
     setSoundOn(isSoundEnabled());
+    if (typeof window !== "undefined") {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    }
     const handleSoundChange = (e: Event) => {
       const customEvent = e as CustomEvent<{ enabled: boolean }>;
       if (customEvent.detail) setSoundOn(customEvent.detail.enabled);
@@ -27,6 +39,19 @@ export function Navbar() {
     setSoundEnabled(next);
     setSoundOn(next);
     if (next) sound.pop();
+  };
+
+  const toggleTheme = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("farhad_theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("farhad_theme", "light");
+    }
+    sound.click();
   };
 
   useEffect(() => {
@@ -43,7 +68,7 @@ export function Navbar() {
       },
       { rootMargin: "-45% 0px -50% 0px", threshold: [0.01, 0.25, 0.6] },
     );
-    navSections.forEach((s) => {
+    filteredNavSections.forEach((s) => {
       const el = document.getElementById(s.id);
       if (el) obs.observe(el);
     });
@@ -51,7 +76,7 @@ export function Navbar() {
       window.removeEventListener("scroll", onScroll);
       obs.disconnect();
     };
-  }, []);
+  }, [filteredNavSections]);
 
   const go = (id: string) => {
     sound.click();
@@ -67,14 +92,12 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-        scrolled ? "py-2" : "py-4"
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+        scrolled ? "py-2.5" : "py-4"
       }`}
     >
       <nav
-        className={`mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-2xl px-4 py-3 transition-all duration-500 sm:px-5 ${
-          scrolled ? "glass shadow-[var(--shadow-depth)]" : "border border-transparent"
-        }`}
+        className="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-card px-4 py-2.5 shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] sm:px-5"
         style={{ width: "min(100% - 1.5rem, 72rem)" }}
         aria-label="Primary"
       >
@@ -87,76 +110,79 @@ export function Navbar() {
             <img
               src={profileConfig.avatar}
               alt={profileConfig.name || profile.name}
-              className="size-9 rounded-xl object-cover ring-2 ring-primary/40 shadow-sm transition-transform duration-300 group-hover:scale-105"
+              className="size-9 rounded-md object-cover border-2 border-slate-900 dark:border-slate-600 shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000] transition-transform duration-200 group-hover:scale-105"
             />
           ) : (
-            <span
-              className="grid size-9 place-items-center rounded-xl text-sm font-bold text-primary-foreground shadow-sm"
-              style={{ background: "var(--gradient-brand)" }}
-            >
+            <span className="grid size-9 place-items-center rounded-md border-2 border-slate-900 dark:border-slate-600 bg-primary text-sm font-bold text-primary-foreground shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000]">
               {profile.initials}
             </span>
           )}
-          <span className="hidden text-sm font-semibold tracking-tight sm:block">
+          <span className="hidden text-sm font-bold tracking-tight sm:block text-foreground">
             {profileConfig.name ? profileConfig.name.split(" ")[0] : profile.shortName}
-            <span className="mono block text-[10px] font-normal text-muted-foreground">
+            <span className="font-mono block text-[10px] font-normal text-muted-foreground">
               {profileConfig.subRole ? profileConfig.subRole.split("·")[0].trim() : "cse · developer"}
             </span>
           </span>
         </button>
 
         <ul className="hidden items-center gap-1 lg:flex">
-          {navSections.map((s) => (
+          {filteredNavSections.map((s) => (
             <li key={`${s.id}-${s.label}`}>
               <button
+                type="button"
                 onClick={() => go(s.id)}
-                className={`relative rounded-lg px-3 py-2 text-sm transition-colors ${
+                className={`relative rounded-md px-2.5 py-1.5 text-xs font-bold transition-all ${
                   active === s.id
-                    ? "text-primary font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-slate-900 text-white dark:bg-primary dark:text-slate-950 shadow-[1px_1px_0px_#0f172a]"
+                    : "text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
                 {s.label}
-                {active === s.id && (
-                  <span
-                    className="absolute inset-x-2 -bottom-0.5 h-px"
-                    style={{ background: "var(--gradient-brand)" }}
-                  />
-                )}
               </button>
             </li>
           ))}
-          <li>
-            <button
-              onClick={() => go("guestbook")}
-              className="relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Guestbook
-            </button>
-          </li>
+
+          {isGuestbookEnabled && (
+            <li>
+              <button
+                type="button"
+                onClick={() => go("guestbook")}
+                className="relative rounded-md px-2.5 py-1.5 text-xs font-bold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Guestbook
+              </button>
+            </li>
+          )}
+
           <li>
             <a
               href="/blog"
-              className="relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:text-primary/90 transition-colors"
+              className="relative inline-flex items-center gap-1.5 rounded-md border border-slate-900 dark:border-slate-600 bg-[#fef08a] dark:bg-amber-300 px-2.5 py-1 text-xs font-bold text-slate-900 shadow-[1px_1px_0px_#0f172a] hover:bg-yellow-200"
             >
-              Blog
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </span>
+              <span>Blog</span>
+              <span className="size-1.5 rounded-full bg-rose-600 animate-pulse" />
             </a>
           </li>
         </ul>
 
         <div className="flex items-center gap-2">
-          {/* Sound FX Toggle */}
+          {/* Chalkboard / Dark Mode Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="rounded-md border-2 border-slate-900 dark:border-slate-600 bg-card p-1.5 text-foreground shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000] transition-all hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+            title={isDark ? "Switch to Day Notebook" : "Switch to Chalkboard Theme"}
+            aria-label="Toggle Chalkboard Dark Mode"
+          >
+            {isDark ? <Sun className="size-4 text-amber-300" /> : <Moon className="size-4 text-slate-700" />}
+          </button>
+
+          {/* Sound Toggle */}
           <button
             type="button"
             onClick={toggleSound}
-            className={`rounded-xl border p-2 transition-all ${
-              soundOn
-                ? "border-primary/50 bg-primary/10 text-primary shadow-[0_0_10px_rgba(6,182,212,0.2)]"
-                : "border-border/60 bg-secondary/40 text-muted-foreground hover:text-foreground"
+            className={`rounded-md border-2 border-slate-900 dark:border-slate-600 p-1.5 shadow-[1px_1px_0px_#0f172a] dark:shadow-[1px_1px_0px_#000] transition-all hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 ${
+              soundOn ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300" : "bg-card text-foreground"
             }`}
             title={soundOn ? "Mute developer SFX" : "Enable developer SFX"}
             aria-label="Toggle sound effects"
@@ -166,28 +192,29 @@ export function Navbar() {
 
           <a
             href="/blog"
-            className="lg:hidden rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary"
+            className="lg:hidden rounded-md border-2 border-slate-900 dark:border-slate-600 bg-[#fef08a] dark:bg-amber-300 px-2.5 py-1 text-xs font-bold text-slate-900 shadow-[1px_1px_0px_#0f172a]"
           >
             Blog
           </a>
 
-          {/* Quick Interactive Resume Modal Trigger */}
+          {/* Quick CV Button */}
           <Magnetic className="hidden sm:inline-block">
             <button
               type="button"
               onClick={openResume}
-              className="mono inline-flex items-center gap-1.5 rounded-xl border border-primary/40 px-3.5 py-2 text-xs text-primary transition-all hover:bg-primary/10 hover:border-primary shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-md border-2 border-slate-900 dark:border-slate-600 bg-card px-3 py-1.5 text-xs font-bold text-foreground shadow-[2px_2px_0px_#0f172a] dark:shadow-[2px_2px_0px_#000] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5"
             >
-              <FileText className="size-3.5" /> View CV
+              <FileText className="size-3.5 text-primary" /> View CV
             </button>
           </Magnetic>
 
           <button
+            type="button"
             onClick={() => {
               sound.click();
               setOpen((o) => !o);
             }}
-            className="glass grid size-10 place-items-center rounded-xl lg:hidden"
+            className="grid size-9 place-items-center rounded-md border-2 border-slate-900 dark:border-slate-600 bg-card text-foreground shadow-[1px_1px_0px_#0f172a] lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
           >
@@ -197,28 +224,39 @@ export function Navbar() {
       </nav>
 
       {open && (
-        <div className="glass mx-auto mt-2 grid max-w-6xl gap-1 rounded-2xl p-3 lg:hidden" style={{ width: "min(100% - 1.5rem, 72rem)" }}>
-          {navSections.map((s) => (
+        <div
+          className="mx-auto mt-2 grid max-w-6xl gap-1 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-card p-3 shadow-[4px_4px_0px_#0f172a] dark:shadow-[4px_4px_0px_#000] lg:hidden"
+          style={{ width: "min(100% - 1.5rem, 72rem)" }}
+        >
+          {filteredNavSections.map((s) => (
             <button
               key={`${s.id}-${s.label}`}
               onClick={() => go(s.id)}
-              className="mono rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+              className="font-mono rounded-md px-3 py-2 text-left text-xs font-bold text-foreground hover:bg-secondary"
             >
               ~/{s.label.toLowerCase()}
             </button>
           ))}
+          {isGuestbookEnabled && (
+            <button
+              onClick={() => go("guestbook")}
+              className="font-mono rounded-md px-3 py-2 text-left text-xs font-bold text-foreground hover:bg-secondary"
+            >
+              ~/guestbook
+            </button>
+          )}
           <a
             href="/blog"
-            className="mono rounded-lg px-3 py-2.5 text-left text-sm font-medium text-primary hover:bg-secondary"
+            className="font-mono rounded-md px-3 py-2 text-left text-xs font-bold text-primary hover:bg-secondary"
           >
-            ~/blog [ live tech feed ]
+            ~/blog
           </a>
           <button
             type="button"
             onClick={openResume}
-            className="mono rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-primary hover:bg-secondary"
+            className="font-mono rounded-md px-3 py-2 text-left text-xs font-bold text-foreground hover:bg-secondary"
           >
-            ~/resume [ interactive cv preview ]
+            ~/resume [ view cv ]
           </button>
         </div>
       )}
