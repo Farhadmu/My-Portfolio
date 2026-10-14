@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import laptopImg from "@/assets/farhad-laptop.png";
+import hackathonTeamImg from "@/assets/farhad-hackathon-team.jpg";
 import { sound } from "@/lib/sound";
 import { Terminal, Code, Pause, Play, Sparkles } from "lucide-react";
 
@@ -33,6 +34,8 @@ const PHOTOS = [
     tag: "PORTRAIT // 01",
     subtag: "FOUNDER & BUILDER",
     caption: "Farhad @ work — 2026 ✦",
+    note: '"Building digital products with clean engineering, real deployments & measurable craft."',
+    category: "// dev notes",
     focus: "object-top",
   },
   {
@@ -40,7 +43,18 @@ const PHOTOS = [
     tag: "IN THE LAB // 02",
     subtag: "ACTIVE CODING SESSION",
     caption: "Farhad @ Terminal // Building Products ⚡",
+    note: '"At the terminal — converting complex requirements into robust, high-performance code."',
+    category: "// live terminal",
     focus: "object-[center_25%]",
+  },
+  {
+    id: 2,
+    tag: "HACKATHON // 03",
+    subtag: "TEAM DEEP WORK & PAIR CODING",
+    caption: "Farhad & Team @ 24h Hackathon 🏆",
+    note: '"In the arena — intense collaboration, high-velocity sprints & solving hard algorithmic challenges together."',
+    category: "// war room",
+    focus: "object-center",
   },
 ];
 
@@ -56,10 +70,11 @@ export function HeroPortrait({ initialPhoto, name = "Md. Farhadul Islam" }: Hero
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Photos array
+  // Photos array (3 rotating perspectives)
   const photos = [
     { ...PHOTOS[0], src: initialPhoto },
     { ...PHOTOS[1], src: laptopImg || "/farhad-laptop.png" },
+    { ...PHOTOS[2], src: hackathonTeamImg || "/farhad-hackathon-team.jpg" },
   ];
 
   // Scramble text effect for caption
@@ -94,7 +109,7 @@ export function HeroPortrait({ initialPhoto, name = "Md. Farhadul Islam" }: Hero
   const triggerTransition = useCallback(
     (targetIndex?: number) => {
       if (isTransitioning) return;
-      const nextIdx = targetIndex !== undefined ? targetIndex : (activeIndex === 0 ? 1 : 0);
+      const nextIdx = targetIndex !== undefined ? targetIndex : (activeIndex + 1) % photos.length;
       if (nextIdx === activeIndex) return;
 
       setIsTransitioning(true);
@@ -305,7 +320,7 @@ export function HeroPortrait({ initialPhoto, name = "Md. Farhadul Islam" }: Hero
                 aria-hidden
                 className="pointer-events-none absolute inset-0 z-20 mix-blend-screen opacity-70 animate-pulse"
                 style={{
-                  backgroundImage: `url(${photos[activeIndex === 0 ? 1 : 0].src})`,
+                  backgroundImage: `url(${photos[(activeIndex + 1) % photos.length].src})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   clipPath: "polygon(0 20%, 100% 20%, 100% 38%, 0 38%, 0 65%, 100% 65%, 100% 75%, 0 75%)",
@@ -398,13 +413,11 @@ export function HeroPortrait({ initialPhoto, name = "Md. Farhadul Islam" }: Hero
           className="absolute -top-2 left-4 size-4 rounded-full bg-rose-600 border border-slate-900 shadow-sm"
         />
         <p className="font-hand text-base sm:text-lg leading-snug text-slate-900 dark:text-amber-100 font-semibold">
-          {activeIndex === 0
-            ? '"Building digital products with clean engineering, real deployments & measurable craft."'
-            : '"At the terminal — converting complex requirements into robust, high-performance code."'}
+          {photos[activeIndex].note}
         </p>
         <div className="mt-2 flex items-center justify-between">
           <span className="font-mono text-[9px] font-bold uppercase text-emerald-700 dark:text-emerald-400">
-            {activeIndex === 0 ? "// dev notes" : "// live terminal"}
+            {photos[activeIndex].category}
           </span>
           <span className="font-mono text-[9px] text-slate-500 dark:text-amber-200/70 font-semibold">
             {photos[activeIndex].subtag}
